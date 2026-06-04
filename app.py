@@ -46,8 +46,8 @@ if controlla_password():
             except Exception:
                 API_KEY = "4cf3c9ba8c89487fa42cbdf57814b7e8" 
                 
-            # Cambiato il mercato per renderlo più stabile
-            URL = f"https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey={API_KEY}&regions=eu&markets=h2h"
+            # Ora cercherà in TUTTI i campionati di calcio attivi nel mondo per darti più scelta
+            URL = f"https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey={API_KEY}&regions=eu&markets=h2h&bookmakers=pinnacle"
             
             try:
                 risposta = requests.get(URL)
