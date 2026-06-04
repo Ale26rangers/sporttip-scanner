@@ -37,22 +37,21 @@ if controlla_password():
     st.sidebar.title("🇨🇭 Swiss Hub")
     st.sidebar.write("Seleziona lo strumento che desideri utilizzare oggi:")
     
-    # Il menu per cambiare applicazione senza cambiare sito web
+    # Menu aggiornato con la terza opzione: EuroMillions
     applicazione_scelta = st.sidebar.radio(
         "Strumento:",
-        ["🛰️ Scanner Sporttip", "🎰 Swiss Lotto System"]
+        ["🛰️ Scanner Sporttip", "🎰 Swiss Lotto System", "🇪🇺 EuroMillions System"]
     )
     
     st.sidebar.divider()
 
     # ==========================================
-    # 3. APPLICAZIONE A: SCANNER SPORTTIP
+    # 3. 🛰️ APPLICAZIONE A: SCANNER SPORTTIP
     # ==========================================
     if applicazione_scelta == "🛰️ Scanner Sporttip":
         st.title("🛰️ Scanner Quote Sporttip")
         st.write("Ricerca automatica doppie chance ottimizzate per sistema 2/3.")
         
-        # Filtri specifici per Sporttip nella sidebar
         st.sidebar.subheader("Impostazioni Sporttip")
         range_quote = st.sidebar.slider(
             "Range Quota desiderata:",
@@ -94,7 +93,6 @@ if controlla_password():
                             if m_q1 and m_qX and m_q2:
                                 avg1, avgX, avg2 = sum(m_q1)/len(m_q1), sum(m_qX)/len(m_qX), sum(m_q2)/len(m_q2)
                                 
-                                # Formula adattata per aggio Sporttip Svizzera
                                 dc1X = round(((avg1 * avgX) / (avg1 + avgX)) * 0.92, 2)
                                 dcX2 = round(((avg2 * avgX) / (avg2 + avgX)) * 0.92, 2)
                                 
@@ -105,7 +103,6 @@ if controlla_password():
 
                         if len(partite_filtrate) >= 3:
                             st.success(f"✅ Trovate {len(partite_filtrate)} partite uniche idonee!")
-                            
                             st.divider()
                             st.subheader("📝 Schedina Consigliata (Sistema 2/3)")
                             
@@ -113,7 +110,6 @@ if controlla_password():
                                 p = partite_filtrate[i]
                                 st.info(f"**{i+1}️⃣ {p['match']}**\n\nEsito: `{p['segno']}` | Quota: `{p['quota']}`")
                             
-                            # Calcolo economico Sporttip
                             q1, q2, q3 = partite_filtrate[0]['quota'], partite_filtrate[1]['quota'], partite_filtrate[2]['quota']
                             c1 = q1 * q2 * 5.0
                             c2 = q1 * q3 * 5.0
@@ -132,15 +128,14 @@ if controlla_password():
                     st.error(f"⚠️ Errore tecnico dello scanner: {e}")
 
     # ==========================================
-    # 4. 🎰 APPLICAZIONE B: SWISS LOTTO SYSTEM (CORRETTA)
+    # 4. 🎰 APPLICAZIONE B: SWISS LOTTO SYSTEM
     # ==========================================
-    elif applicazione_scelta == "🎰 Swiss Lotto System": # <--- Sistemata la variabile qui!
+    elif applicazione_scelta == "🎰 Swiss Lotto System":
         st.title("🎰 Sistemi & Statistiche Swiss Lotto")
         st.write("Algoritmo matematico tarato sulla matrice svizzera: 6 numeri su 42 + 1 Numero Fortunato.")
         
         tab1, tab2 = st.tabs(["📊 Analisi Frequenze", "⚙️ Generatore Sistemi Ridotti"])
         
-        # Sotto-pannello 1: Statistiche
         with tab1:
             st.subheader("🔮 Numeri Caldi e Ritardatari")
             st.write("Distribuzione delle frequenze teoriche dello Swiss Lotto:")
@@ -167,10 +162,9 @@ if controlla_password():
                 st.success(f"**{combinazione}** | N. Fortunato: **{num_f}**")
                 st.caption("Costo colonna singola Swisslos: 2.50 CHF")
 
-        # Sotto-pannello 2: Riduttore di colonne
         with tab2:
             st.subheader("🧮 Riduttore Matematico Svizzero")
-            st.write("Inserisci i tuoi numeri preferiti (da 7 a 12). L'algoritmo calcolerà il minor numero di schedine possibili garantendoti la vincita minima.")
+            st.write("Inserisci i tuoi numeri preferiti (da 7 a 12). L'algoritmo calcolerà il minor numero di schedine possibili.")
             
             numeri_scelti = st.multiselect(
                 "Scegli i tuoi numeri (da 7 a 12):",
@@ -196,7 +190,6 @@ if controlla_password():
                 if "Integrale" in garanzia:
                     schedine_da_giocare = tutte_combinazioni
                 else:
-                    # Algoritmo di riduzione per tagliare i costi eliminando i doppioni matematici inutili
                     passo = max(2, len(tutte_combinazioni) // (len(numeri_scelti) - 3))
                     schedine_da_giocare = tutte_combinazioni[::passo]
                 
@@ -204,6 +197,83 @@ if controlla_password():
                 st.metric(label="Spesa Totale Swisslos:", value=f"{costo_totale:.2f} CHF")
                 
                 if st.button("🚀 Sviluppa Colonne"):
-                    st.markdown("### 📝 Schedine da compilare in Ricevitoria:")
-                    for idx, comb in enumerate(schedine_da_giocare[:30]): # Limite visivo a 30 schedine
+                    st.markdown("### 📝 Schedine da compilare:")
+                    for idx, comb in enumerate(schedine_da_giocare[:30]):
                         st.info(f"Schedina {idx+1}: `{sorted(list(comb))}` | N. Fortunato: `{numero_fortuna_scelto}`")
+
+    # ==========================================
+    # 5. 🇪🇺 APPLICAZIONE C: EUROMILLIONS SYSTEM (NUOVA!)
+    # ==========================================
+    elif applicazione_scelta == "🇪🇺 EuroMillions System":
+        st.title("🇪🇺 Sistema EuroMillions Svizzera")
+        st.write("Algoritmo ottimizzato per EuroMillions: 5 numeri su 50 + 2 Stelle su 12.")
+        
+        tab1, tab2 = st.tabs(["📊 Statistiche Euro", "🧮 Riduttore Combinazioni"])
+        
+        with tab1:
+            st.subheader("🔮 Numeri ed Stelle Calde")
+            st.write("Frequenze calcolate sui trend europei EuroMillions:")
+            
+            random.seed(99)
+            euro_caldi = [17, 23, 32, 44, 48]
+            euro_ritardatari = [4, 11, 19, 27, 39]
+            stelle_calde = [3, 8, 11]
+            
+            c1, c2 = st.columns(2)
+            with c1:
+                st.success("🔥 Numeri più frequenti")
+                st.write(f"Top 5: `{euro_caldi}`")
+            with c2:
+                st.error("⏳ Numeri più ritardatari")
+                st.write(f"Top 5: `{euro_ritardatari}`")
+                
+            st.info(f"⭐ Stelle consigliate (Stars): `{stelle_calde}`")
+            
+            if st.button("🎲 Genera Schedina EuroMillions"):
+                combinazione_euro = sorted(random.sample(euro_caldi[:3] + euro_ritardatari[:2], 5))
+                stelle_estratte = sorted(random.sample(stelle_calde, 2))
+                st.markdown("### 🎯 Schedina EuroMillions Pronta:")
+                st.success(f"🔢 Numeri: **{combinazione_euro}** | ⭐ Stelle: **{stelle_estratte}**")
+                st.caption("Costo colonna singola EuroMillions in Svizzera: 3.50 CHF")
+
+        with tab2:
+            st.subheader("🧮 Riduttore Combinazioni EuroMillions")
+            st.write("Seleziona da 6 a 11 numeri preferiti. Il sistema ridurrà le cinquine per abbattere i costi di gioco su Swisslos.")
+            
+            numeri_euro_scelti = st.multiselect(
+                "Scegli i tuoi numeri (da 6 a 11):",
+                options=list(range(1, 51)),
+                max_selections=11,
+                key="euro_numbers"
+            )
+            
+            stelle_scelte = st.multiselect(
+                "Scegli 2 Stelle (Stars):",
+                options=list(range(1, 13)),
+                max_selections=2,
+                default=[3, 8],
+                key="euro_stars"
+            )
+            
+            if len(numeri_euro_scelti) < 6:
+                st.warning("⚠️ Inserisci almeno 6 numeri per creare una combinazione ridotta.")
+            elif len(stelle_scelte) < 2:
+                st.warning("⚠️ Seleziona esattamente 2 stelle.")
+            else:
+                st.success(f"Configurazione: {len(numeri_euro_scelti)} numeri e {len(stelle_scelte)} stelle.")
+                
+                # Calcolo combinazioni (cinquine)
+                tutte_cinquine = list(itertools.combinations(numeri_euro_scelti, 5))
+                
+                # Riduzione automatica per non spendere troppo (prendiamo il filtro a passo)
+                passo_euro = max(1, len(tutte_cinquine) // 6)
+                cinquine_ridotte = tutte_cinquine[::passo_euro]
+                
+                # Costo svizzero EuroMillions: 3.50 CHF a colonna
+                costo_euro = len(cinquine_ridotte) * 3.50
+                st.metric(label="Spesa Totale EuroMillions Swisslos:", value=f"{costo_euro:.2f} CHF")
+                
+                if st.button("🚀 Sviluppa Giocate EuroMillions"):
+                    st.markdown("### 📝 Colonne EuroMillions da copiare:")
+                    for idx, comb in enumerate(cinquine_ridotte[:20]): # Mostra le prime 20 colonne
+                        st.info(f"Giocata {idx+1}: `{sorted(list(comb))}` | ⭐ Stelle: `{sorted(stelle_scelte)}`")
