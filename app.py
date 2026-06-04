@@ -11,7 +11,8 @@ st.write("Schiaccia il bottone sotto per scansionare il palinsesto in tempo real
 if st.button("🔄 Avvia Scansione Palinsesto"):
     
     with st.spinner("Connessione ai server delle quote in corso..."):
-        API_KEY = "4cf3c9ba8c89487fa42cbdf57814b7e8" 
+        # L'applicazione cercherà la chiave nella cassaforte privata di Streamlit
+        API_KEY = st.secrets["MY_API_KEY"]
         URL = f"https://api.the-odds-api.com/v4/sports/soccer_uefa_champs_league/odds/?apiKey={API_KEY}&regions=eu&markets=h2h"
         
         try:
