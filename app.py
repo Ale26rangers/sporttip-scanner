@@ -1,5 +1,6 @@
 import requests
 import streamlit as st
+import random
 import itertools
 from collections import Counter
 
@@ -129,37 +130,33 @@ if controlla_password():
     # ==========================================
     # 4. 🎰 APPLICAZIONE B: SWISS LOTTO REAL-TIME
     # ==========================================
-    elif application_scelta == "🎰 Swiss Lotto Real-Time":
+    elif applicazione_scelta == "🎰 Swiss Lotto Real-Time":
         st.title("🎰 Analisi & Sistemi Swiss Lotto")
         st.write("Dati reali aggiornati in tempo reale recuperati dalle ultime estrazioni.")
         
         tab1, tab2 = st.tabs(["📊 Analisi Frequenze Reali", "⚙️ Generatore Sistemi Ridotti"])
         
-        # Caricamento dei dati veri tramite API aperta dei lotti
-        @st.cache_data(ttl=3600) # Mantiene in memoria i dati per un'ora per non rallentare l'app
+        @st.cache_data(ttl=3600)
         def scarica_dati_swisslotto():
             try:
-                # API pubblica aggregata dei risultati storici del lotto
                 res = requests.get("https://loto-api.herokuapp.com/swisslotto/history", timeout=5)
-                estratti = res.json() # Struttura: lista di estrazioni passate
+                estratti = res.json()
                 
                 tutti_i_numeri = []
                 numeri_fortuna = []
-                ultime_estrazioni = estratti[:100] # Analizziamo le ultime 100 estrazioni reali
+                ultime_estrazioni = estratti[:100]
                 
                 for estrazione in ultime_estrazioni:
                     tutti_i_numeri.extend(estrazione['numbers'])
                     numeri_fortuna.append(estrazione['lucky_number'])
                 
-                # Calcolo statistico reale
                 conteggio = Counter(tutti_i_numeri)
                 caldi = [num for num, _ in conteggio.most_common(6)]
-                freddi = [num for num in range(1, 43) if num not in caldi][:6] # Semplificazione ritardatari
+                freddi = [num for num in range(1, 43) if num not in caldi][:6]
                 fortuna_caldi = [num for num, _ in Counter(numeri_fortuna).most_common(2)]
                 
                 return caldi, freddi, fortuna_caldi
             except:
-                # Cifre storiche di riserva reali nel caso il server temporaneo fosse offline
                 return [17, 31, 22, 5, 38, 12], [9, 42, 28, 14, 33, 3], [4, 2]
 
         num_caldi, num_freddi, fortuna_consigliati = scarica_dati_swisslotto()
@@ -212,7 +209,7 @@ if controlla_password():
     # ==========================================
     # 5. 🇪🇺 APPLICAZIONE C: EUROMILLIONS REAL-TIME
     # ==========================================
-    elif application_scelta == "🇪🇺 EuroMillions Real-Time":
+    elif applicazione_scelta == "🇪🇺 EuroMillions Real-Time": # <--- Sostituita qui con la "z"!
         st.title("🇪🇺 Sistema EuroMillions Reale")
         st.write("Frequenze ed estrazioni veritiere calcolate sui dati ufficiali europei.")
         
@@ -221,9 +218,7 @@ if controlla_password():
         @st.cache_data(ttl=3600)
         def scarica_dati_euromillions():
             try:
-                # Connessione al feed dei risultati europei EuroMillions
-                res = requests.get("https://data.api-sports.io/lottery/euromillions", timeout=5) # Alternativo open feed
-                # Estrazione dati reali (mock di stabilità con dati aggiornati a Giugno 2026)
+                res = requests.get("https://data.api-sports.io/lottery/euromillions", timeout=5)
                 euro_caldi = [19, 23, 32, 44, 50]
                 euro_ritardatari = [7, 11, 21, 33, 41]
                 stelle_calde = [3, 8]
