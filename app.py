@@ -84,9 +84,9 @@ if controlla_password():
                                     quota_1X = round((q1 * qX) / (q1 + qX), 2) + 0.35
                                     quota_X2 = round((q2 * qX) / (q2 + qX), 2) + 0.35
                                     
-                                    if 1.35 <= quota_1X <= 1.45:
+                                    if 1.20 <= quota_1X <= 1.80:
                                         partite_valide.append({"match": match_name, "segno": "1X", "quota": quota_1X})
-                                    if 1.35 <= quota_X2 <= 1.45:
+                                    if 1.20 <= quota_X2 <= 1.80:
                                         partite_valide.append({"match": match_name, "segno": "X2", "quota": quota_X2})
 
                     # Mostriamo i risultati
