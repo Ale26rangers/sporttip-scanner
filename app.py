@@ -132,9 +132,9 @@ if controlla_password():
                     st.error(f"⚠️ Errore tecnico dello scanner: {e}")
 
     # ==========================================
-    # 4. 🎰 APPLICAZIONE B: SWISS LOTTO SYSTEM
+    # 4. 🎰 APPLICAZIONE B: SWISS LOTTO SYSTEM (CORRETTA)
     # ==========================================
-    elif application_scelta == "🎰 Swiss Lotto System":
+    elif applicazione_scelta == "🎰 Swiss Lotto System": # <--- Sistemata la variabile qui!
         st.title("🎰 Sistemi & Statistiche Swiss Lotto")
         st.write("Algoritmo matematico tarato sulla matrice svizzera: 6 numeri su 42 + 1 Numero Fortunato.")
         
