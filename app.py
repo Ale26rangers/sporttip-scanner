@@ -35,7 +35,7 @@ if controlla_password():
     st.sidebar.divider()
 
     # ==========================================
-    # 3. 🛰️ SCANNER SPORTTIP (Automatico)
+    # 3. 🛰️ SCANNER SPORTTIP
     # ==========================================
     if applicazione_scelta == "🛰️ Scanner Sporttip":
         st.title("🛰️ Scanner Quote Sporttip")
@@ -89,17 +89,20 @@ if controlla_password():
                     st.error("⚠️ Errore API Sporttip.")
 
     # ==========================================
-    # 4. 🎰 SWISS LOTTO (Gestione Manuale)
+    # 4. 🎰 SWISS LOTTO
     # ==========================================
     elif applicazione_scelta == "🎰 Swiss Lotto":
         st.title("🎰 Swiss Lotto")
-        st.success("🟢 **Sistema Offline:** Caricamento istantaneo e sicuro.")
+        st.success("🟢 **Sistema Offline:** Algoritmo miscelato per Frequenza e Ritardo.")
         
         # 🟢 MODIFICA QUI I NUMERI DEL LOTTO SVIZZERO QUANDO VUOI AGGIORNARLI
         data_aggiornamento = "5 Giugno 2026"
-        caldi = [18, 32, 22, 38, 26, 11]  # Inserisci i 6 numeri più estratti
-        freddi = [42, 9, 28, 14, 30, 36]  # Inserisci i 6 numeri ritardatari
-        l_caldi = [5, 2]                  # Inserisci i 2 Numeri Fortunati migliori
+        caldi = [36, 3, 31, 26, 22, 24]       # Più estratti nella storia
+        freddi = [41, 37, 27, 2, 11, 15]       # Meno estratti nella storia (Frequenza minima)
+        ritardatari = [32, 5, 26, 2, 4, 15]   # Assenti da più estrazioni attualmente
+        
+        l_caldi = [1, 5]                       # Numeri Fortunati frequenti
+        l_ritardo = [3, 6]                     # Numeri Fortunati ritardatari
         # -------------------------------------------------------------------
 
         st.caption(f"🔄 *Ultimo aggiornamento statistiche: **{data_aggiornamento}***")
@@ -107,26 +110,34 @@ if controlla_password():
         tab1, tab2 = st.tabs(["📊 Analisi Storica", "⚙️ Riduttore Matematico"])
         
         with tab1:
-            st.write("Statistiche di riferimento inserite nel sistema:")
-            c1, c2 = st.columns(2)
+            st.write("Statistiche suddivise in categorie:")
+            c1, c2, c3 = st.columns(3)
             with c1:
                 st.success("🔥 Frequenti")
                 st.write(f"`{caldi}`")
             with c2:
-                st.error("⏳ Ritardatari")
+                st.info("🧊 Freddi")
                 st.write(f"`{freddi}`")
+            with c3:
+                st.error("⏳ Ritardi")
+                st.write(f"`{ritardatari}`")
             
-            st.info(f"🍀 N. Fortunati: `{l_caldi}`")
-            
-            if st.button("🎲 Genera Schedina Statistica"):
-                combinazione = sorted(random.sample(caldi[:4] + freddi[:2], 6))
-                num_f = random.choice(l_caldi)
-                st.success(f"Sestina Consigliata: **{combinazione}** | N. Fortuna: **{num_f}**")
+            if st.button("🎲 Genera Schedina Strategica"):
+                # LOGICA DI GENERAZIONE: 3 Caldi + 1 Freddo + 2 Ritardatari = 6 Numeri
+                scelta_caldi = random.sample(caldi, 3)
+                scelta_freddi = random.sample(freddi, 1)
+                scelta_ritardo = random.sample(ritardatari, 2)
+                
+                combinazione = sorted(scelta_caldi + scelta_freddi + scelta_ritardo)
+                num_f = random.choice(l_caldi + l_ritardo)
+                
+                st.success(f"Sestina Bilanciata: **{combinazione}** | N. Fortuna: **{num_f}**")
+                st.caption("🔍 La schedina contiene: 3 freq. assolute + 1 freddo storico + 2 attuali ritardatari.")
 
         with tab2:
             st.subheader("🧮 Sviluppo Sistemi Swisslos")
             numeri_scelti = st.multiselect("Scegli i tuoi numeri preferiti (7-12):", options=list(range(1, 43)), key="swiss_nums")
-            n_f = st.slider("Numero Fortunato da usare in tutte le colonne:", 1, 6, 3)
+            n_f = st.slider("Numero Fortunato da usare fisse:", 1, 6, 3)
             
             if len(numeri_scelti) >= 7:
                 tutte = list(itertools.combinations(numeri_scelti, 6))
@@ -139,17 +150,20 @@ if controlla_password():
                         st.info(f"Schedina {idx+1}: `{sorted(list(c))}` | Fortuna: `{n_f}`")
 
     # ==========================================
-    # 5. 🇪🇺 EUROMILLIONS (Gestione Manuale)
+    # 5. 🇪🇺 EUROMILLIONS
     # ==========================================
     elif applicazione_scelta == "🇪🇺 EuroMillions":
         st.title("🇪🇺 EuroMillions")
-        st.success("🟢 **Sistema Offline:** Caricamento istantaneo e sicuro.")
+        st.success("🟢 **Sistema Offline:** Algoritmo miscelato per Frequenza e Ritardo.")
         
         # 🟢 MODIFICA QUI I NUMERI DELL'EUROMILLIONS QUANDO VUOI AGGIORNARLI
         data_aggiornamento_euro = "5 Giugno 2026"
-        e_caldi = [23, 44, 50, 19, 37]  # Inserisci i 5 numeri più estratti
-        e_freddi = [33, 41, 13, 48, 22] # Inserisci i 5 numeri ritardatari
-        s_calde = [3, 2]                # Inserisci le 2 stelle più frequenti
+        e_caldi = [44, 42, 23, 19, 29]          # Più estratti nella storia
+        e_freddi = [22, 33, 46, 18, 40]         # Meno estratti nella storia (Frequenza minima)
+        e_ritardatari = [21, 39, 24, 7, 15]     # Assenti da più estrazioni attualmente
+        
+        s_calde = [2, 3]                        # Stelle Frequenti
+        s_ritardo = [10, 4]                     # Stelle Ritardatarie
         # -------------------------------------------------------------------
 
         st.caption(f"🔄 *Ultimo aggiornamento statistiche: **{data_aggiornamento_euro}***")
@@ -157,20 +171,31 @@ if controlla_password():
         tab1, tab2 = st.tabs(["📊 Analisi Storica", "⚙️ Riduttore Matematico"])
         
         with tab1:
-            st.write("Statistiche di riferimento inserite nel sistema:")
-            c1, c2 = st.columns(2)
+            st.write("Statistiche suddivise in categorie:")
+            c1, c2, c3 = st.columns(3)
             with c1:
                 st.success("🔥 Frequenti")
                 st.write(f"`{e_caldi}`")
             with c2:
-                st.error("⏳ Ritardatari")
+                st.info("🧊 Freddi")
                 st.write(f"`{e_freddi}`")
+            with c3:
+                st.error("⏳ Ritardi")
+                st.write(f"`{e_ritardatari}`")
             
-            st.info(f"⭐ Stelle Consigliate: `{s_calde}`")
-            
-            if st.button("🎲 Genera Schedina EuroMillions"):
-                comb = sorted(random.sample(e_caldi[:3] + e_freddi[:2], 5))
-                st.success(f"Cinquina Consigliata: **{comb}** | ⭐ Stelle: **{s_calde}**")
+            if st.button("🎲 Genera Schedina Strategica"):
+                # LOGICA DI GENERAZIONE EURO: 2 Caldi + 1 Freddo + 2 Ritardatari = 5 Numeri
+                scelta_caldi = random.sample(e_caldi, 2)
+                scelta_freddi = random.sample(e_freddi, 1)
+                scelta_ritardo = random.sample(e_ritardatari, 2)
+                
+                comb = sorted(scelta_caldi + scelta_freddi + scelta_ritardo)
+                
+                # Miscela per le stelle: 1 Frequente + 1 Ritardataria
+                stelle_miste = sorted([random.choice(s_calde), random.choice(s_ritardo)])
+                
+                st.success(f"Cinquina Bilanciata: **{comb}** | ⭐ Stelle: **{stelle_miste}**")
+                st.caption("🔍 Mix: 2 freq. assolute + 1 freddo storico + 2 attuali ritardatari.")
 
         with tab2:
             st.subheader("🧮 Sviluppo Sistemi EuroMillions")
@@ -184,5 +209,5 @@ if controlla_password():
                 st.metric("Spesa Totale (3.50 CHF/colonna):", f"{len(ridotte)*3.50:.2f} CHF")
                 
                 if st.button("🚀 Sviluppa Giocate"):
-                    for idx, c in enumerate(ridotte):
+                    for idx, c in enumerate(ridotte[:20]):
                         st.info(f"Giocata {idx+1}: `{sorted(list(c))}` | Stelle: `{sorted(stars)}`")
