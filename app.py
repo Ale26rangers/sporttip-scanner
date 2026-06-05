@@ -96,10 +96,13 @@ if controlla_password():
         st.success("🟢 **Sistema Offline:** Caricamento istantaneo e sicuro.")
         
         # 🟢 MODIFICA QUI I NUMERI DEL LOTTO SVIZZERO QUANDO VUOI AGGIORNARLI
-        caldi = [36, 5, 40, 31, 6, 24]  # Inserisci i 6 numeri più estratti separati da virgola
-        freddi = [41, 37, 27, 2, 11, 15]  # Inserisci i 6 numeri ritardatari separati da virgola
-        l_caldi = [1, 5, 4]                  # Inserisci i 2 Numeri Fortunati migliori
+        data_aggiornamento = "5 Giugno 2026"
+        caldi = [18, 32, 22, 38, 26, 11]  # Inserisci i 6 numeri più estratti
+        freddi = [42, 9, 28, 14, 30, 36]  # Inserisci i 6 numeri ritardatari
+        l_caldi = [5, 2]                  # Inserisci i 2 Numeri Fortunati migliori
         # -------------------------------------------------------------------
+
+        st.caption(f"🔄 *Ultimo aggiornamento statistiche: **{data_aggiornamento}***")
 
         tab1, tab2 = st.tabs(["📊 Analisi Storica", "⚙️ Riduttore Matematico"])
         
@@ -143,10 +146,13 @@ if controlla_password():
         st.success("🟢 **Sistema Offline:** Caricamento istantaneo e sicuro.")
         
         # 🟢 MODIFICA QUI I NUMERI DELL'EUROMILLIONS QUANDO VUOI AGGIORNARLI
-        e_caldi = [44, 42, 23, 19, 29]  # Inserisci i 5 numeri più estratti separati da virgola
-        e_freddi = [22, 33, 46, 18, 40] # Inserisci i 5 numeri ritardatari separati da virgola
-        s_calde = [2, 3, 8]                # Inserisci le 2 stelle più frequenti
+        data_aggiornamento_euro = "5 Giugno 2026"
+        e_caldi = [23, 44, 50, 19, 37]  # Inserisci i 5 numeri più estratti
+        e_freddi = [33, 41, 13, 48, 22] # Inserisci i 5 numeri ritardatari
+        s_calde = [3, 2]                # Inserisci le 2 stelle più frequenti
         # -------------------------------------------------------------------
+
+        st.caption(f"🔄 *Ultimo aggiornamento statistiche: **{data_aggiornamento_euro}***")
 
         tab1, tab2 = st.tabs(["📊 Analisi Storica", "⚙️ Riduttore Matematico"])
         
