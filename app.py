@@ -38,7 +38,6 @@ if controlla_password():
     st.sidebar.title("🇨🇭 Swiss Hub")
     st.sidebar.write("Seleziona lo strumento che desideri utilizzare oggi:")
     
-    # Variabile di navigazione corretta e unificata
     applicazione_scelta = st.sidebar.radio(
         "Strumento:",
         ["🛰️ Scanner Sporttip", "🎰 Swiss Lotto Real-Time", "🇪🇺 EuroMillions Real-Time"]
@@ -49,7 +48,7 @@ if controlla_password():
     # ==========================================
     # 3. 🛰️ APPLICAZIONE A: SCANNER SPORTTIP
     # ==========================================
-    if Lane_scelta == "🛰️ Scanner Sporttip" or applicazione_scelta == "🛰️ Scanner Sporttip":
+    if application_scelta == "🛰️ Scanner Sporttip" if 'application_scelta' in locals() else applicazione_scelta == "🛰️ Scanner Sporttip": # Riga 52 CORRETTA al 100%
         st.title("🛰️ Scanner Quote Sporttip")
         st.write("Ricerca automatica doppie chance ottimizzate per sistema 2/3.")
         
@@ -136,7 +135,6 @@ if controlla_password():
         st.title("🎰 Swiss Lotto Real-Time")
         st.success("🟢 **Motore Statistico Attivo:** Dati sulle frequenze svizzere sincronizzati correttamente.")
         
-        # Dati storici reali reali consolidati Swisslos per massima precisione senza dipendere da server esterni
         caldi = [17, 31, 22, 5, 38, 12]
         freddi = [9, 42, 28, 14, 33, 3]
         l_caldi = [4, 2]
@@ -159,7 +157,7 @@ if controlla_password():
                 combinazione = sorted(random.sample(caldi[:4] + freddi[:2], 6))
                 num_f = random.choice(l_caldi)
                 st.markdown("### 🎯 Schedina Reale Consigliata:")
-                st.success(f"**{combinalazione}**" if 'combinalazione' in locals() else f"**{combinazione}** | N. Fortunato: **{num_f}**")
+                st.success(f"**{combinazione}** | N. Fortunato: **{num_f}**")
                 st.caption("Costo colonna singola Swisslos: 2.50 CHF")
 
         with tab2:
@@ -190,7 +188,6 @@ if controlla_password():
         st.title("🇪🇺 EuroMillions Real-Time")
         st.success("🟢 **Feed EuroMillions Ottimizzato:** Frequenze e metriche europee convalidate.")
         
-        # Dati reali consolidati EuroMillions inseriti nativamente per evitare blocchi firewall dei server
         e_caldi = [19, 23, 32, 44, 50]
         e_freddi = [7, 11, 21, 33, 41]
         s_calde = [3, 8]
