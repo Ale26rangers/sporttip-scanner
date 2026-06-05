@@ -2,7 +2,6 @@ import requests
 import streamlit as st
 import random
 import itertools
-import pandas as pd
 
 # Configurazione grafica ottimizzata per Smartphone
 st.set_page_config(page_title="Swiss Betting & Lotto Hub", page_icon="🇨🇭", layout="centered")
@@ -31,19 +30,21 @@ if controlla_password():
     st.sidebar.title("🇨🇭 Swiss Hub")
     applicazione_scelta = st.sidebar.radio(
         "Strumento:",
-        ["🛰️ Scanner Sporttip", "🎰 Swiss Lotto Dinamico", "🇪🇺 EuroMillions Dinamico"]
+        ["🛰️ Scanner Sporttip", "🎰 Swiss Lotto", "🇪🇺 EuroMillions"]
     )
     st.sidebar.divider()
 
     # ==========================================
-    # 3. 🛰️ SCANNER SPORTTIP
+    # 3. 🛰️ SCANNER SPORTTIP (Automatico)
     # ==========================================
     if applicazione_scelta == "🛰️ Scanner Sporttip":
         st.title("🛰️ Scanner Quote Sporttip")
+        st.write("Ricerca automatica doppie chance ottimizzate per sistema 2/3.")
+        
         range_quote = st.sidebar.slider("Range Quota desiderata:", 1.10, 2.00, (1.35, 1.45), 0.01)
         
         if st.button("🔍 Cerca Partite Ora"):
-            with st.spinner("Analisi palinsesto globale in corso..."):
+            with st.spinner("Analisi palinsesto in corso..."):
                 try:
                     API_KEY = st.secrets["MY_API_KEY"]
                     URL = f"https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey={API_KEY}&regions=eu&markets=h2h"
@@ -72,7 +73,9 @@ if controlla_password():
                                     partite_filtrate.append({"match": f"{home} - {away}", "segno": "X2", "quota": dcX2})
 
                         if len(partite_filtrate) >= 3:
-                            st.success(f"✅ Trovate {len(partite_filtrate)} partite!")
+                            st.success(f"✅ Trovate {len(partite_filtrate)} partite uniche!")
+                            st.divider()
+                            st.subheader("📝 Schedina Consigliata (Sistema 2/3)")
                             for i in range(3):
                                 p = partite_filtrate[i]
                                 st.info(f"**{i+1}️⃣ {p['match']}**\n\nEsito: `{p['segno']}` | Quota: `{p['quota']}`")
@@ -81,126 +84,99 @@ if controlla_password():
                             vincita_totale = round((q1*q2 + q1*q3 + q2*q3) * 5.0, 2)
                             st.warning(f"💰 Spesa: 15.00 CHF | **Vincita Max: {vincita_totale} CHF**")
                         else:
-                            st.error("❌ Nessun match trovato nel range.")
-                except Exception as e:
+                            st.error("❌ Nessun match trovato nel range attuale.")
+                except Exception:
                     st.error("⚠️ Errore API Sporttip.")
 
     # ==========================================
-    # 4. 🎰 SWISS LOTTO (Scraper Dinamico)
+    # 4. 🎰 SWISS LOTTO (Gestione Manuale)
     # ==========================================
-    elif applicazione_scelta == "🎰 Swiss Lotto Dinamico":
-        st.title("🎰 Swiss Lotto Dinamico")
+    elif applicazione_scelta == "🎰 Swiss Lotto":
+        st.title("🎰 Swiss Lotto")
+        st.success("🟢 **Sistema Offline:** Caricamento istantaneo e sicuro.")
         
-        @st.cache_data(ttl=43200) # Cerca i dati nuovi ogni 12 ore
-        def scraper_swiss_lotto():
-            try:
-                # Il ragnetto va a leggere le tabelle HTML di un portale statistico neutrale
-                url = "https://www.lotto.net/swiss-lotto/statistics"
-                headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-                html = requests.get(url, headers=headers, timeout=8).text
-                tabelle = pd.read_html(html)
-                
-                # Cerca di estrarre la prima colonna (i numeri) dalle tabelle statistiche web
-                caldi_web = tabelle[0].iloc[:, 0].head(6).tolist()
-                freddi_web = tabelle[1].iloc[:, 0].head(6).tolist()
-                return [int(x) for x in caldi_web], [int(x) for x in freddi_web], [4, 2], True
-            except:
-                # Se i firewall bloccano la richiesta, usa i calcoli assoluti
-                return [18, 32, 22, 38, 26, 11], [42, 9, 28, 14, 30, 36], [5, 2], False
+        # 🟢 MODIFICA QUI I NUMERI DEL LOTTO SVIZZERO QUANDO VUOI AGGIORNARLI
+        caldi = [18, 32, 22, 38, 26, 11]  # Inserisci i 6 numeri più estratti separati da virgola
+        freddi = [42, 9, 28, 14, 30, 36]  # Inserisci i 6 numeri ritardatari separati da virgola
+        l_caldi = [5, 2]                  # Inserisci i 2 Numeri Fortunati migliori
+        # -------------------------------------------------------------------
 
-        with st.spinner("Scansione web dei database in corso..."):
-            caldi, freddi, l_caldi, ok_lotto = scraper_swiss_lotto()
-
-        if ok_lotto:
-            st.success("🟢 **Web Scraping Riuscito:** Frequenze scaricate in tempo reale da internet.")
-        else:
-            st.warning("⚠️ **Firewall Incontrato:** Lettura web bloccata. Sono mostrati i dati storici matematici di base.")
-
-        tab1, tab2 = st.tabs(["📊 Analisi Storica", "⚙️ Generatore Sistemi Ridotti"])
+        tab1, tab2 = st.tabs(["📊 Analisi Storica", "⚙️ Riduttore Matematico"])
         
         with tab1:
+            st.write("Statistiche di riferimento inserite nel sistema:")
             c1, c2 = st.columns(2)
             with c1:
-                st.success("🔥 Numeri Caldi Aggiornati")
+                st.success("🔥 Frequenti")
                 st.write(f"`{caldi}`")
             with c2:
-                st.error("⏳ Maggiori Ritardi")
+                st.error("⏳ Ritardatari")
                 st.write(f"`{freddi}`")
+            
+            st.info(f"🍀 N. Fortunati: `{l_caldi}`")
             
             if st.button("🎲 Genera Schedina Statistica"):
                 combinazione = sorted(random.sample(caldi[:4] + freddi[:2], 6))
-                st.success(f"**{combinazione}** | N. Fortunato: **{random.choice(l_caldi)}**")
+                num_f = random.choice(l_caldi)
+                st.success(f"Sestina Consigliata: **{combinazione}** | N. Fortuna: **{num_f}**")
 
         with tab2:
-            st.subheader("🧮 Riduttore Matematico")
-            numeri_scelti = st.multiselect("Scegli i numeri (7-12):", options=list(range(1, 43)), key="swiss_nums")
+            st.subheader("🧮 Sviluppo Sistemi Swisslos")
+            numeri_scelti = st.multiselect("Scegli i tuoi numeri preferiti (7-12):", options=list(range(1, 43)), key="swiss_nums")
+            n_f = st.slider("Numero Fortunato da usare in tutte le colonne:", 1, 6, 3)
+            
             if len(numeri_scelti) >= 7:
                 tutte = list(itertools.combinations(numeri_scelti, 6))
                 passo = max(2, len(tutte) // (len(numeri_scelti) - 3))
-                for idx, c in enumerate(tutte[::passo][:20]):
-                    st.info(f"Schedina {idx+1}: `{sorted(list(c))}`")
-
-    # ==========================================
-    # 5. 🇪🇺 EUROMILLIONS (Scraper Dinamico)
-    # ==========================================
-    elif applicazione_scelta == "🇪🇺 EuroMillions Dinamico":
-        st.title("🇪🇺 EuroMillions Dinamico")
-        
-        @st.cache_data(ttl=43200)
-        def scraper_euro_millions():
-            try:
-                # Il ragnetto esplora il sito statistico di EuroMillions
-                url = "https://www.euro-millions.com/statistics"
-                headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-                html = requests.get(url, headers=headers, timeout=8).text
-                tabelle = pd.read_html(html)
+                ridotte = tutte[::passo]
+                st.metric("Spesa Totale (2.50 CHF/colonna):", f"{len(ridotte)*2.50:.2f} CHF")
                 
-                caldi_web = []
-                freddi_web = []
-                # Analizza le decine di tabelle della pagina per trovare quelle dei numeri
-                for df in tabelle:
-                    if 'Number' in df.columns or 'Numero' in df.columns:
-                        numeri = df.iloc[:, 0].head(5).tolist()
-                        if not caldi_web: caldi_web = numeri
-                        elif not freddi_web: 
-                            freddi_web = numeri
-                            break
-                            
-                if caldi_web and freddi_web:
-                    return [int(x) for x in caldi_web], [int(x) for x in freddi_web], [3, 8], True
-                raise Exception("Tabelle strutturate non trovate")
-            except:
-                return [23, 44, 50, 19, 37], [33, 41, 13, 48, 22], [3, 2], False
+                if st.button("🚀 Sviluppa Colonne"):
+                    for idx, c in enumerate(ridotte[:20]):
+                        st.info(f"Schedina {idx+1}: `{sorted(list(c))}` | Fortuna: `{n_f}`")
 
-        with st.spinner("Scansione dei portali europei in corso..."):
-            e_caldi, e_freddi, s_calde, ok_euro = scraper_euro_millions()
+    # ==========================================
+    # 5. 🇪🇺 EUROMILLIONS (Gestione Manuale)
+    # ==========================================
+    elif applicazione_scelta == "🇪🇺 EuroMillions":
+        st.title("🇪🇺 EuroMillions")
+        st.success("🟢 **Sistema Offline:** Caricamento istantaneo e sicuro.")
+        
+        # 🟢 MODIFICA QUI I NUMERI DELL'EUROMILLIONS QUANDO VUOI AGGIORNARLI
+        e_caldi = [23, 44, 50, 19, 37]  # Inserisci i 5 numeri più estratti separati da virgola
+        e_freddi = [33, 41, 13, 48, 22] # Inserisci i 5 numeri ritardatari separati da virgola
+        s_calde = [3, 2]                # Inserisci le 2 stelle più frequenti
+        # -------------------------------------------------------------------
 
-        if ok_euro:
-            st.success("🟢 **Web Scraping Riuscito:** Dati europei estratti in tempo reale.")
-        else:
-            st.warning("⚠️ **Firewall Incontrato:** Scansione respinta dai server web. Applicati dati storici di sistema.")
-
-        tab1, tab2 = st.tabs(["📊 Analisi Storica", "⚙️ Generatore Sistemi Ridotti"])
+        tab1, tab2 = st.tabs(["📊 Analisi Storica", "⚙️ Riduttore Matematico"])
         
         with tab1:
+            st.write("Statistiche di riferimento inserite nel sistema:")
             c1, c2 = st.columns(2)
             with c1:
-                st.success("🔥 Più Estratti")
+                st.success("🔥 Frequenti")
                 st.write(f"`{e_caldi}`")
             with c2:
-                st.error("⏳ Grandi Ritardi")
+                st.error("⏳ Ritardatari")
                 st.write(f"`{e_freddi}`")
+            
+            st.info(f"⭐ Stelle Consigliate: `{s_calde}`")
             
             if st.button("🎲 Genera Schedina EuroMillions"):
                 comb = sorted(random.sample(e_caldi[:3] + e_freddi[:2], 5))
-                st.success(f"🔢 Numeri: **{comb}** | ⭐ Stelle: **{s_calde}**")
+                st.success(f"Cinquina Consigliata: **{comb}** | ⭐ Stelle: **{s_calde}**")
 
         with tab2:
-            st.subheader("🧮 Riduttore EuroMillions")
-            nums = st.multiselect("Scegli i numeri (6-11):", options=list(range(1, 51)), key="eu_nums")
-            stars = st.multiselect("Scegli 2 Stelle:", options=list(range(1, 13)), max_selections=2, default=[3,2])
+            st.subheader("🧮 Sviluppo Sistemi EuroMillions")
+            nums = st.multiselect("Scegli i tuoi numeri (6-11):", options=list(range(1, 51)), key="eu_nums")
+            stars = st.multiselect("Scegli 2 Stelle da usare fisse:", options=list(range(1, 13)), max_selections=2, default=[3,2])
+            
             if len(nums) >= 6 and len(stars) == 2:
                 tutte = list(itertools.combinations(nums, 5))
                 passo = max(1, len(tutte) // 6)
-                for idx, c in enumerate(tutte[::passo][:20]):
-                    st.info(f"Giocata {idx+1}: `{sorted(list(c))}` | Stelle: `{sorted(stars)}`")
+                ridotte = tutte[::passo]
+                st.metric("Spesa Totale (3.50 CHF/colonna):", f"{len(ridotte)*3.50:.2f} CHF")
+                
+                if st.button("🚀 Sviluppa Giocate"):
+                    for idx, c in enumerate(ridotte):
+                        st.info(f"Giocata {idx+1}: `{sorted(list(c))}` | Stelle: `{sorted(stars)}`")
