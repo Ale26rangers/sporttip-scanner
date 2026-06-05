@@ -25,7 +25,7 @@ def controlla_password():
     return True
 
 # ==========================================
-# 2. MOTORE STATISTICO PESATO (Nessun doppione)
+# 2. MOTORE STATISTICO PESATO (Corretto: Zero Doppioni Reale)
 # ==========================================
 def genera_pesata(pool_totale, freddi, ritardatari, k):
     pesi = {n: 1 for n in pool_totale}
@@ -35,7 +35,13 @@ def genera_pesata(pool_totale, freddi, ritardatari, k):
     candidati = list(pesi.keys())
     valori_pesi = list(pesi.values())
     
-    return sorted(random.choices(candidati, weights=valori_pesi, k=k*3))[:k]
+    # Sistema anti-doppione: estraiamo finché non abbiamo 'k' numeri unici
+    estratti = set()
+    while len(estratti) < k:
+        scelta = random.choices(candidati, weights=valori_pesi, k=1)[0]
+        estratti.add(scelta)
+        
+    return sorted(list(estratti))
 
 # ==========================================
 # 3. INTERFACCIA E STRUMENTI
@@ -46,7 +52,7 @@ if controlla_password():
     st.sidebar.divider()
 
     # ---------------------------------------------------------
-    # 🛰️ SCANNER SPORTTIP (Logica integrale ripristinata)
+    # 🛰️ SCANNER SPORTTIP
     # ---------------------------------------------------------
     if opzione == "🛰️ Scanner Sporttip":
         st.title("🛰️ Scanner Quote Sporttip")
