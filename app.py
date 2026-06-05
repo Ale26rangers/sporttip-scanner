@@ -25,13 +25,9 @@ def controlla_password():
     return True
 
 # ==========================================
-# 2. MOTORE STATISTICO PESATO (Nessun doppione)
+# 2. MOTORE STATISTICO PESATO (Priorità Ritardi/Freddi)
 # ==========================================
-def genera_pesata(pool_totale, frequenti, ritardatari, k):
-    # I Freddi sono la differenza matematica tra tutti i numeri e quelli frequenti
-    freddi = list(set(pool_totale) - set(frequenti))
-    
-    # Assegnazione Pesi
+def genera_pesata(pool_totale, freddi, ritardatari, k):
     pesi = {n: 1 for n in pool_totale}
     for n in freddi: pesi[n] += 1       # Bonus se Freddo
     for n in ritardatari: pesi[n] += 2  # Bonus Doppio se Ritardatario
@@ -39,7 +35,6 @@ def genera_pesata(pool_totale, frequenti, ritardatari, k):
     candidati = list(pesi.keys())
     valori_pesi = list(pesi.values())
     
-    # Estrazione con priorità
     return sorted(random.choices(candidati, weights=valori_pesi, k=k*3))[:k]
 
 # ==========================================
@@ -51,7 +46,7 @@ if controlla_password():
     st.sidebar.divider()
 
     # ---------------------------------------------------------
-    # 🛰️ SCANNER SPORTTIP (Logica integrale ripristinata)
+    # 🛰️ SCANNER SPORTTIP
     # ---------------------------------------------------------
     if opzione == "🛰️ Scanner Sporttip":
         st.title("🛰️ Scanner Quote Sporttip")
@@ -83,7 +78,6 @@ if controlla_password():
                                             elif o['name'] == 'Draw': m_qX.append(o['price'])
                                             elif o['name'] == away: m_q2.append(o['price'])
                             
-                            # Calcolo matematico aggio Svizzero ripristinato
                             if m_q1 and m_qX and m_q2:
                                 avg1 = sum(m_q1)/len(m_q1)
                                 avgX = sum(m_qX)/len(m_qX)
@@ -114,20 +108,25 @@ if controlla_password():
                     st.error(f"⚠️ Errore API Sporttip: {e}")
 
     # ---------------------------------------------------------
-    # 🎰 SWISS LOTTO (Visione Completa)
+    # 🎰 SWISS LOTTO
     # ---------------------------------------------------------
     elif opzione == "🎰 Swiss Lotto":
         st.title("🎰 Swiss Lotto")
         
-        # 🟢 MODIFICA QUI I DATI
-        frequenti = [36, 3, 31, 26, 22, 24]
-        ritardatari = [32, 5, 26, 2, 4, 15]
-        l_freq = [5, 2]     # Numeri fortunati frequenti
-        l_rit = [3, 4]      # Numeri fortunati ritardatari
+        data_aggiornamento = "5 Giugno 2026"
+        st.caption(f"🔄 *Ultimo aggiornamento statistiche: **{data_aggiornamento}***")
         
-        # Calcolo automatico dei Freddi
-        freddi = list(set(range(1, 43)) - set(frequenti))
-        l_freddi = list(set(range(1, 7)) - set(l_freq))
+        # 🟢 LISTE COMPLETE REGISTRATE (Frequenza decrescente)
+        swiss_freq_full = [36, 3, 31, 26, 22, 24, 13, 18, 17, 1, 8, 6, 4, 9, 32, 21, 42, 5, 7, 14, 40, 38, 12, 19, 28, 35, 30, 10, 34, 23, 33, 39, 16, 20, 29, 25, 15, 11, 2, 27, 37, 41]
+        swiss_fort_full = [1, 5, 4, 6, 2, 3]
+        swiss_rit = [32, 5, 26, 2, 4, 15]
+        swiss_fort_rit = [3, 4]
+        
+        # Derivazione automatica tramite slicing
+        frequenti = swiss_freq_full[:6]  # I primi 6
+        freddi = swiss_freq_full[-6:]    # Gli ultimi 6
+        l_freq = swiss_fort_full[:2]     # I primi 2
+        l_freddi = swiss_fort_full[-2:]  # Gli ultimi 2
 
         tab1, tab2 = st.tabs(["📊 Visione Statistica", "🧮 Sistemi"])
         
@@ -135,8 +134,8 @@ if controlla_password():
             st.subheader("🔢 Numeri Principali (1-42)")
             c1, c2, c3 = st.columns(3)
             with c1: st.success("🔥 Freq"); st.write(f"`{frequenti}`")
-            with c2: st.info("🧊 Freddi"); st.write(f"`{freddi[:6]}`...")
-            with c3: st.error("⏳ Ritardi"); st.write(f"`{ritardatari}`")
+            with c2: st.info("🧊 Freddi"); st.write(f"`{freddi}`")
+            with c3: st.error("⏳ Ritardi"); st.write(f"`{swiss_rit}`")
             
             st.divider()
             
@@ -144,13 +143,13 @@ if controlla_password():
             c4, c5, c6 = st.columns(3)
             with c4: st.success("🔥 Freq"); st.write(f"`{l_freq}`")
             with c5: st.info("🧊 Freddi"); st.write(f"`{l_freddi}`")
-            with c6: st.error("⏳ Ritardi"); st.write(f"`{l_rit}`")
+            with c6: st.error("⏳ Ritardi"); st.write(f"`{swiss_fort_rit}`")
             
             st.divider()
             
             if st.button("🎲 Genera Schedina Pesata", use_container_width=True):
-                comb = genera_pesata(range(1, 43), frequenti, ritardatari, 6)
-                f_num = genera_pesata(range(1, 7), l_freq, l_rit, 1)[0]
+                comb = genera_pesata(range(1, 43), freddi, swiss_rit, 6)
+                f_num = genera_pesata(range(1, 7), l_freddi, swiss_fort_rit, 1)[0]
                 st.success(f"Sestina Strategica: **{comb}** | N. Fortuna: **{f_num}**")
 
         with tab2:
@@ -164,20 +163,25 @@ if controlla_password():
                     st.info(f"Schedina {idx+1}: `{sorted(list(c))}` | Fortuna: `{n_f}`")
 
     # ---------------------------------------------------------
-    # 🇪🇺 EUROMILLIONS (Visione Completa)
+    # 🇪🇺 EUROMILLIONS
     # ---------------------------------------------------------
     elif opzione == "🇪🇺 EuroMillions":
         st.title("🇪🇺 EuroMillions")
         
-        # 🟢 MODIFICA QUI I DATI
-        frequenti_eu = [44, 42, 23, 19, 29]
-        ritardatari_eu = [21, 39, 24, 7, 15]
-        s_freq = [3, 8]     # Stelle frequenti
-        s_rit = [1, 10]     # Stelle ritardatarie
+        data_aggiornamento = "5 Giugno 2026"
+        st.caption(f"🔄 *Ultimo aggiornamento statistiche: **{data_aggiornamento}***")
         
-        # Calcolo automatico dei Freddi
-        freddi_eu = list(set(range(1, 51)) - set(frequenti_eu))
-        s_fredde = list(set(range(1, 13)) - set(s_freq))
+        # 🟢 LISTE COMPLETE REGISTRATE (Frequenza decrescente)
+        euro_freq_full = [44, 42, 23, 19, 29, 17, 10, 21, 50, 37, 27, 35, 25, 26, 20, 45, 13, 14, 4, 5, 15, 24, 38, 7, 12, 34, 49, 30, 6, 11, 16, 39, 48, 3, 28, 8, 1, 9, 31, 36, 47, 2, 41, 43, 32, 40, 18, 46, 33, 22]
+        euro_stelle_full = [2, 3, 8, 9, 6, 5, 7, 1, 4, 10, 11, 12]
+        euro_rit = [21, 39, 24, 7, 15]
+        euro_stelle_rit = [1, 10]
+        
+        # Derivazione automatica tramite slicing
+        frequenti_eu = euro_freq_full[:5]  # I primi 5
+        freddi_eu = euro_freq_full[-5:]    # Gli ultimi 5
+        s_freq = euro_stelle_full[:2]      # Le prime 2
+        s_fredde = euro_stelle_full[-2:]   # Le ultime 2
 
         tab1, tab2 = st.tabs(["📊 Visione Statistica", "🧮 Sistemi"])
         
@@ -185,22 +189,22 @@ if controlla_password():
             st.subheader("🔢 Numeri Principali (1-50)")
             c1, c2, c3 = st.columns(3)
             with c1: st.success("🔥 Freq"); st.write(f"`{frequenti_eu}`")
-            with c2: st.info("🧊 Freddi"); st.write(f"`{freddi_eu[:5]}`...")
-            with c3: st.error("⏳ Ritardi"); st.write(f"`{ritardatari_eu}`")
+            with c2: st.info("🧊 Freddi"); st.write(f"`{freddi_eu}`")
+            with c3: st.error("⏳ Ritardi"); st.write(f"`{euro_rit}`")
             
             st.divider()
             
             st.subheader("⭐ Stelle (1-12)")
             c4, c5, c6 = st.columns(3)
             with c4: st.success("🔥 Freq"); st.write(f"`{s_freq}`")
-            with c5: st.info("🧊 Fredde"); st.write(f"`{s_fredde[:2]}`...")
-            with c6: st.error("⏳ Ritardi"); st.write(f"`{s_rit}`")
+            with c5: st.info("🧊 Fredde"); st.write(f"`{s_fredde}`")
+            with c6: st.error("⏳ Ritardi"); st.write(f"`{euro_stelle_rit}`")
             
             st.divider()
             
             if st.button("🎲 Genera Schedina Pesata", use_container_width=True):
-                comb = genera_pesata(range(1, 51), frequenti_eu, ritardatari_eu, 5)
-                stelle = genera_pesata(range(1, 13), s_freq, s_rit, 2)
+                comb = genera_pesata(range(1, 51), freddi_eu, euro_rit, 5)
+                stelle = genera_pesata(range(1, 13), s_fredde, euro_stelle_rit, 2)
                 st.success(f"Cinquina Strategica: **{comb}** | ⭐ Stelle: **{stelle}**")
 
         with tab2:
