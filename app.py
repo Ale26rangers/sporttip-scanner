@@ -47,9 +47,6 @@ def genera_pesata(pool_totale, freddi, ritardatari, k):
 # ==========================================
 if controlla_password():
     st.sidebar.title("🇨🇭 Swiss Hub")
-
-if controlla_password():
-    st.sidebar.title("🇨🇭 Swiss Hub")
     
     # 🔴 AGGIUNTA LA QUARTA OPZIONE QUI:
     opzione = st.sidebar.radio("Strumento:", [
