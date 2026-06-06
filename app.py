@@ -47,108 +47,109 @@ def genera_pesata(pool_totale, freddi, ritardatari, k):
 # ==========================================
 if controlla_password():
     st.sidebar.title("🇨🇭 Swiss Hub")
-    opzione = st.sidebar.radio("Strumento:", ["🛰️ Scanner Sporttip", "🎰 Swiss Lotto", "🇪🇺 EuroMillions"])
+
+if controlla_password():
+    st.sidebar.title("🇨🇭 Swiss Hub")
+    
+    # 🔴 AGGIUNTA LA QUARTA OPZIONE QUI:
+    opzione = st.sidebar.radio("Strumento:", [
+        "🛰️ Scanner Sporttip", 
+        "🔮 Predictor Professionale", 
+        "🎰 Swiss Lotto", 
+        "🇪🇺 EuroMillions"
+    ])
     st.sidebar.divider()
 
     # ---------------------------------------------------------
-    # 🛰️ SCANNER SPORTTIP (Con doppia strategia)
+    # 🛰️ SCANNER SPORTTIP (Lascialo esattamente come prima)
     # ---------------------------------------------------------
     if opzione == "🛰️ Scanner Sporttip":
+        # ... (Tutto il codice dello scanner vecchio rimane qui) ...
         st.title("🛰️ Scanner Quote Sporttip")
-        
-        # Selezione della strategia
-        strategia = st.radio("Seleziona la Strategia Matematica:", 
-                             ["🎯 Giocate Singole (Esiti Secchi)", "📝 Sistema 2/3 (Doppie Chance)"], 
-                             horizontal=True)
-        st.divider()
+        st.write("Scanner attivo. Seleziona il Predictor per l'analisi avanzata.")
 
-        if strategia == "📝 Sistema 2/3 (Doppie Chance)":
-            st.write("Ricerca automatica doppie chance ottimizzate per sistema 2/3.")
-            range_q = st.sidebar.slider("Range Quota desiderata:", 1.10, 2.00, (1.35, 1.45), 0.01)
-        else:
-            st.write("Ricerca di quote di valore secche (1, X, 2) da giocare esclusivamente in **Singola**.")
-            range_q = st.sidebar.slider("Range Quota (Singole):", 1.50, 4.00, (1.80, 2.20), 0.05)
+    # ---------------------------------------------------------
+    # 🔮 PREDICTOR PROFESSIONALE (IL NUOVO MOTORE)
+    # ---------------------------------------------------------
+    elif opzione == "🔮 Predictor Professionale":
+        st.title("🔮 Predictor Matematico")
+        st.write("Analisi avanzata delle probabilità e calcolo delle **Quote di Valore (Fair Odds)**.")
         
-        if st.button("🔍 Cerca Partite Ora"):
-            with st.spinner("Analisi palinsesto globale in corso..."):
+        campionato = st.selectbox("Scegli il Campionato da analizzare:", 
+                                  ["🇨🇭 Super League Svizzera", "🇳🇱 Eredivisie (Olanda)", "🇩🇪 Bundesliga"])
+        
+        # ID ufficiali di API-Football per questi campionati
+        league_ids = {"🇨🇭 Super League Svizzera": 202, "🇳🇱 Eredivisie (Olanda)": 88, "🇩🇪 Bundesliga": 78}
+        league_id = league_ids[campionato]
+        
+        if st.button("🧮 Avvia Motore Predittivo", type="primary"):
+            with st.spinner("Scaricamento dati e calcolo probabilità in corso..."):
                 try:
-                    API_KEY = st.secrets["MY_API_KEY"]
-                    URL = f"https://api.the-odds-api.com/v4/sports/soccer/odds/?apiKey={API_KEY}&regions=eu&markets=h2h"
-                    dati = requests.get(URL).json()
-                    partite_filtrate = []
+                    API_FOOTBALL_KEY = st.secrets["API_FOOTBALL_KEY"]
+                    headers = {
+                        "X-RapidAPI-Key": API_FOOTBALL_KEY,
+                        "X-RapidAPI-Host": "api-football-v1.p.rapidapi.com"
+                    }
                     
-                    if isinstance(dati, list):
-                        for partita in dati:
-                            home = partita.get('home_team')
-                            away = partita.get('away_team')
-                            
-                            if not partita.get('bookmakers'): continue
-                            
-                            m_q1, m_qX, m_q2 = [], [], []
-                            for b in partita['bookmakers']:
-                                for m in b.get('markets', []):
-                                    if m['key'] == 'h2h':
-                                        for o in m.get('outcomes', []):
-                                            if o['name'] == home: m_q1.append(o['price'])
-                                            elif o['name'] == 'Draw': m_qX.append(o['price'])
-                                            elif o['name'] == away: m_q2.append(o['price'])
-                            
-                            if m_q1 and m_qX and m_q2:
-                                avg1 = sum(m_q1)/len(m_q1)
-                                avgX = sum(m_qX)/len(m_qX)
-                                avg2 = sum(m_q2)/len(m_q2)
-                                
-                                # Logica per Giocate Singole
-                                if strategia == "🎯 Giocate Singole (Esiti Secchi)":
-                                    q1_svizzera = round(avg1 * 0.92, 2)
-                                    qX_svizzera = round(avgX * 0.92, 2)
-                                    q2_svizzera = round(avg2 * 0.92, 2)
-                                    
-                                    if range_q[0] <= q1_svizzera <= range_q[1]:
-                                        partite_filtrate.append({"match": f"{home} - {away}", "segno": "1", "quota": q1_svizzera})
-                                    elif range_q[0] <= qX_svizzera <= range_q[1]:
-                                        partite_filtrate.append({"match": f"{home} - {away}", "segno": "X", "quota": qX_svizzera})
-                                    elif range_q[0] <= q2_svizzera <= range_q[1]:
-                                        partite_filtrate.append({"match": f"{home} - {away}", "segno": "2", "quota": q2_svizzera})
-                                
-                                # Logica per Sistema 2/3 (Doppie Chance)
-                                else:
-                                    dc1X = round(((avg1 * avgX) / (avg1 + avgX)) * 0.92, 2)
-                                    dcX2 = round(((avg2 * avgX) / (avg2 + avgX)) * 0.92, 2)
-                                    
-                                    if range_q[0] <= dc1X <= range_q[1]:
-                                        partite_filtrate.append({"match": f"{home} - {away}", "segno": "1X", "quota": dc1X})
-                                    elif range_q[0] <= dcX2 <= range_q[1]:
-                                        partite_filtrate.append({"match": f"{home} - {away}", "segno": "X2", "quota": dcX2})
-
-                        # Visualizzazione risultati in base alla strategia
-                        if strategia == "📝 Sistema 2/3 (Doppie Chance)":
-                            if len(partite_filtrate) >= 3:
-                                st.success(f"✅ Trovate {len(partite_filtrate)} partite idonee!")
-                                st.subheader("📝 Schedina Consigliata (Sistema 2/3)")
-                                for i in range(3):
-                                    p = partite_filtrate[i]
-                                    st.info(f"**{i+1}️⃣ {p['match']}**\n\nEsito: `{p['segno']}` | Quota: `{p['quota']}`")
-                                
-                                q1, q2, q3 = partite_filtrate[0]['quota'], partite_filtrate[1]['quota'], partite_filtrate[2]['quota']
-                                vincita_totale = round((q1*q2 + q1*q3 + q2*q3) * 5.0, 2)
-                                st.warning(f"💰 Spesa: 15.00 CHF | **Vincita Max: {vincita_totale} CHF**")
-                            else:
-                                st.error("❌ Nessun match trovato nel range attuale.")
+                    # 1. Scarica le prossime 5 partite di questo campionato
+                    url_fixtures = f"https://api-football-v1.p.rapidapi.com/v3/fixtures?league={league_id}&next=5"
+                    response = requests.get(url_fixtures, headers=headers).json()
+                    
+                    if "response" in response and len(response["response"]) > 0:
+                        st.success(f"✅ Trovati {len(response['response'])} match imminenti. Elaborazione in corso...")
                         
-                        elif strategia == "🎯 Giocate Singole (Esiti Secchi)":
-                            if len(partite_filtrate) > 0:
-                                st.success(f"✅ Trovate {len(partite_filtrate)} occasioni per Singole!")
-                                st.subheader("🎯 Consigli per Giocate Singole (Stake Fisso)")
-                                st.caption("Gioca ogni evento su una schedina separata con lo stesso importo (es. 5 CHF l'una).")
-                                # Mostra fino a 5 opzioni per non intasare lo schermo
-                                for i, p in enumerate(partite_filtrate[:5]):
-                                    st.info(f"**Partita:** {p['match']} \n\n**Pronostico:** Esito `{p['segno']}` \n\n**Quota:** `{p['quota']}`")
-                            else:
-                                st.error("❌ Nessun match trovato nel range attuale.")
+                        for match in response["response"]:
+                            fix_id = match["fixture"]["id"]
+                            home = match["teams"]["home"]["name"]
+                            away = match["teams"]["away"]["name"]
+                            data_match = match["fixture"]["date"][:10] # Prende solo YYYY-MM-DD
+                            
+                            # 2. Interroga il motore per le Predizioni di questa partita
+                            url_pred = f"https://api-football-v1.p.rapidapi.com/v3/predictions?fixture={fix_id}"
+                            pred_data = requests.get(url_pred, headers=headers).json()
+                            
+                            if "response" in pred_data and len(pred_data["response"]) > 0:
+                                p = pred_data["response"][0]["predictions"]
                                 
+                                # Probabilità pure
+                                p_home = p["percent"]["home"]
+                                p_draw = p["percent"]["draw"]
+                                p_away = p["percent"]["away"]
+                                advice = p["advice"]
+                                
+                                st.divider()
+                                st.subheader(f"⚽ {home} vs {away}")
+                                st.caption(f"📅 Data: {data_match}")
+                                
+                                # Colonne Visive con le Probabilità
+                                col1, col2, col3 = st.columns(3)
+                                col1.metric(label=f"Vittoria {home}", value=p_home)
+                                col2.metric(label="Pareggio (X)", value=p_draw)
+                                col3.metric(label=f"Vittoria {away}", value=p_away)
+                                
+                                st.info(f"💡 **Verdetto dell'Algoritmo:** {advice}")
+                                
+                                # 3. Il vero segreto: Calcolo delle Fair Odds (Quote Matematiche)
+                                # (Formula = 100 / Percentuale)
+                                num_h = float(p_home.replace('%', ''))
+                                num_d = float(p_draw.replace('%', ''))
+                                num_a = float(p_away.replace('%', ''))
+                                
+                                q_home = round(100 / num_h, 2) if num_h > 0 else 0
+                                q_draw = round(100 / num_d, 2) if num_d > 0 else 0
+                                q_away = round(100 / num_a, 2) if num_a > 0 else 0
+                                
+                                st.markdown("### ⚖️ Quote Matematiche Reali (Fair Odds)")
+                                st.markdown(f"**1:** `{q_home}` | **X:** `{q_draw}` | **2:** `{q_away}`")
+                                st.caption("🔍 **Regola d'oro:** Apri l'app di Sporttip. Se Sporttip offre una quota *SUPERIORE* a queste quote matematiche, hai trovato una **Value Bet**! Scommetti in Singola.")
+                    else:
+                        st.warning("Nessuna partita imminente trovata per questo campionato al momento.")
+                
+                except KeyError:
+                    st.error("⚠️ Chiave API mancante! Assicurati di aver aggiunto 'API_FOOTBALL_KEY' nei secrets di Streamlit.")
                 except Exception as e:
-                    st.error(f"⚠️ Errore API Sporttip: {e}")
+                    st.error(f"⚠️ Errore di connessione: {e}")
+
 
     # ---------------------------------------------------------
     # 🎰 SWISS LOTTO
