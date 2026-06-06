@@ -86,7 +86,7 @@ if controlla_password():
                 headers = {"x-apisports-key": API_KEY}
                 
                 # DEFINIAMO QUI LA VARIABILE CHE DAVA ERRORE
-                url_fixtures = f"https://v3.football.api-sports.io/fixtures?league={league_id}&next=50"
+                url_fixtures = f"https://v3.football.api-sports.io/fixtures?league={league_id}&next=5"
                 
                 import requests
                 response = requests.get(url_fixtures, headers=headers).json()
