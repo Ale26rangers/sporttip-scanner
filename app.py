@@ -25,17 +25,16 @@ def controlla_password():
     return True
 
 # ==========================================
-# 2. MOTORE STATISTICO PESATO (Corretto: Zero Doppioni Reale)
+# 2. MOTORE STATISTICO PESATO (Nessun doppione)
 # ==========================================
 def genera_pesata(pool_totale, freddi, ritardatari, k):
     pesi = {n: 1 for n in pool_totale}
-    for n in freddi: pesi[n] += 1       # Bonus se Freddo
-    for n in ritardatari: pesi[n] += 2  # Bonus Doppio se Ritardatario
+    for n in freddi: pesi[n] += 1       
+    for n in ritardatari: pesi[n] += 2  
     
     candidati = list(pesi.keys())
     valori_pesi = list(pesi.values())
     
-    # Sistema anti-doppione: estraiamo finché non abbiamo 'k' numeri unici
     estratti = set()
     while len(estratti) < k:
         scelta = random.choices(candidati, weights=valori_pesi, k=1)[0]
@@ -52,13 +51,23 @@ if controlla_password():
     st.sidebar.divider()
 
     # ---------------------------------------------------------
-    # 🛰️ SCANNER SPORTTIP
+    # 🛰️ SCANNER SPORTTIP (Con doppia strategia)
     # ---------------------------------------------------------
     if opzione == "🛰️ Scanner Sporttip":
         st.title("🛰️ Scanner Quote Sporttip")
-        st.write("Ricerca automatica doppie chance ottimizzate per sistema 2/3.")
         
-        range_q = st.sidebar.slider("Range Quota desiderata:", 1.10, 2.00, (1.35, 1.45), 0.01)
+        # Selezione della strategia
+        strategia = st.radio("Seleziona la Strategia Matematica:", 
+                             ["🎯 Giocate Singole (Esiti Secchi)", "📝 Sistema 2/3 (Doppie Chance)"], 
+                             horizontal=True)
+        st.divider()
+
+        if strategia == "📝 Sistema 2/3 (Doppie Chance)":
+            st.write("Ricerca automatica doppie chance ottimizzate per sistema 2/3.")
+            range_q = st.sidebar.slider("Range Quota desiderata:", 1.10, 2.00, (1.35, 1.45), 0.01)
+        else:
+            st.write("Ricerca di quote di valore secche (1, X, 2) da giocare esclusivamente in **Singola**.")
+            range_q = st.sidebar.slider("Range Quota (Singole):", 1.50, 4.00, (1.80, 2.20), 0.05)
         
         if st.button("🔍 Cerca Partite Ora"):
             with st.spinner("Analisi palinsesto globale in corso..."):
@@ -89,27 +98,55 @@ if controlla_password():
                                 avgX = sum(m_qX)/len(m_qX)
                                 avg2 = sum(m_q2)/len(m_q2)
                                 
-                                dc1X = round(((avg1 * avgX) / (avg1 + avgX)) * 0.92, 2)
-                                dcX2 = round(((avg2 * avgX) / (avg2 + avgX)) * 0.92, 2)
+                                # Logica per Giocate Singole
+                                if strategia == "🎯 Giocate Singole (Esiti Secchi)":
+                                    q1_svizzera = round(avg1 * 0.92, 2)
+                                    qX_svizzera = round(avgX * 0.92, 2)
+                                    q2_svizzera = round(avg2 * 0.92, 2)
+                                    
+                                    if range_q[0] <= q1_svizzera <= range_q[1]:
+                                        partite_filtrate.append({"match": f"{home} - {away}", "segno": "1", "quota": q1_svizzera})
+                                    elif range_q[0] <= qX_svizzera <= range_q[1]:
+                                        partite_filtrate.append({"match": f"{home} - {away}", "segno": "X", "quota": qX_svizzera})
+                                    elif range_q[0] <= q2_svizzera <= range_q[1]:
+                                        partite_filtrate.append({"match": f"{home} - {away}", "segno": "2", "quota": q2_svizzera})
                                 
-                                if range_q[0] <= dc1X <= range_q[1]:
-                                    partite_filtrate.append({"match": f"{home} - {away}", "segno": "1X", "quota": dc1X})
-                                elif range_q[0] <= dcX2 <= range_q[1]:
-                                    partite_filtrate.append({"match": f"{home} - {away}", "segno": "X2", "quota": dcX2})
+                                # Logica per Sistema 2/3 (Doppie Chance)
+                                else:
+                                    dc1X = round(((avg1 * avgX) / (avg1 + avgX)) * 0.92, 2)
+                                    dcX2 = round(((avg2 * avgX) / (avg2 + avgX)) * 0.92, 2)
+                                    
+                                    if range_q[0] <= dc1X <= range_q[1]:
+                                        partite_filtrate.append({"match": f"{home} - {away}", "segno": "1X", "quota": dc1X})
+                                    elif range_q[0] <= dcX2 <= range_q[1]:
+                                        partite_filtrate.append({"match": f"{home} - {away}", "segno": "X2", "quota": dcX2})
 
-                        if len(partite_filtrate) >= 3:
-                            st.success(f"✅ Trovate {len(partite_filtrate)} partite uniche!")
-                            st.divider()
-                            st.subheader("📝 Schedina Consigliata (Sistema 2/3)")
-                            for i in range(3):
-                                p = partite_filtrate[i]
-                                st.info(f"**{i+1}️⃣ {p['match']}**\n\nEsito: `{p['segno']}` | Quota: `{p['quota']}`")
-                            
-                            q1, q2, q3 = partite_filtrate[0]['quota'], partite_filtrate[1]['quota'], partite_filtrate[2]['quota']
-                            vincita_totale = round((q1*q2 + q1*q3 + q2*q3) * 5.0, 2)
-                            st.warning(f"💰 Spesa: 15.00 CHF | **Vincita Max: {vincita_totale} CHF**")
-                        else:
-                            st.error("❌ Nessun match trovato nel range attuale. Prova ad allargare le quote.")
+                        # Visualizzazione risultati in base alla strategia
+                        if strategia == "📝 Sistema 2/3 (Doppie Chance)":
+                            if len(partite_filtrate) >= 3:
+                                st.success(f"✅ Trovate {len(partite_filtrate)} partite idonee!")
+                                st.subheader("📝 Schedina Consigliata (Sistema 2/3)")
+                                for i in range(3):
+                                    p = partite_filtrate[i]
+                                    st.info(f"**{i+1}️⃣ {p['match']}**\n\nEsito: `{p['segno']}` | Quota: `{p['quota']}`")
+                                
+                                q1, q2, q3 = partite_filtrate[0]['quota'], partite_filtrate[1]['quota'], partite_filtrate[2]['quota']
+                                vincita_totale = round((q1*q2 + q1*q3 + q2*q3) * 5.0, 2)
+                                st.warning(f"💰 Spesa: 15.00 CHF | **Vincita Max: {vincita_totale} CHF**")
+                            else:
+                                st.error("❌ Nessun match trovato nel range attuale.")
+                        
+                        elif strategia == "🎯 Giocate Singole (Esiti Secchi)":
+                            if len(partite_filtrate) > 0:
+                                st.success(f"✅ Trovate {len(partite_filtrate)} occasioni per Singole!")
+                                st.subheader("🎯 Consigli per Giocate Singole (Stake Fisso)")
+                                st.caption("Gioca ogni evento su una schedina separata con lo stesso importo (es. 5 CHF l'una).")
+                                # Mostra fino a 5 opzioni per non intasare lo schermo
+                                for i, p in enumerate(partite_filtrate[:5]):
+                                    st.info(f"**Partita:** {p['match']} \n\n**Pronostico:** Esito `{p['segno']}` \n\n**Quota:** `{p['quota']}`")
+                            else:
+                                st.error("❌ Nessun match trovato nel range attuale.")
+                                
                 except Exception as e:
                     st.error(f"⚠️ Errore API Sporttip: {e}")
 
@@ -122,7 +159,6 @@ if controlla_password():
         data_aggiornamento = "5 Giugno 2026"
         st.caption(f"🔄 *Ultimo aggiornamento statistiche: **{data_aggiornamento}***")
         
-        # 🟢 LISTE COMPLETE REGISTRATE
         swiss_freq_full = [36, 3, 31, 26, 22, 24, 13, 18, 17, 1, 8, 6, 4, 9, 32, 21, 42, 5, 7, 14, 40, 38, 12, 19, 28, 35, 30, 10, 34, 23, 33, 39, 16, 20, 29, 25, 15, 11, 2, 27, 37, 41]
         swiss_fort_full = [1, 5, 4, 6, 2, 3]
         swiss_rit_full = [28, 11, 23, 2, 41, 15, 33, 4, 30, 8, 36, 17, 34, 16, 27, 26, 42, 29, 3, 25, 39, 13, 22, 19, 14, 21, 10, 5, 24, 7, 32, 40, 20, 18, 12, 1, 38, 9, 31, 37, 35, 6]
@@ -179,7 +215,6 @@ if controlla_password():
         data_aggiornamento = "5 Giugno 2026"
         st.caption(f"🔄 *Ultimo aggiornamento statistiche: **{data_aggiornamento}***")
         
-        # 🟢 LISTE COMPLETE REGISTRATE
         euro_freq_full = [44, 42, 23, 19, 29, 17, 10, 21, 50, 37, 27, 35, 25, 26, 20, 45, 13, 14, 4, 5, 15, 24, 38, 7, 12, 34, 49, 30, 6, 11, 16, 39, 48, 3, 28, 8, 1, 9, 31, 36, 47, 2, 41, 43, 32, 40, 18, 46, 33, 22]
         euro_stelle_full = [2, 3, 8, 9, 6, 5, 7, 1, 4, 10, 11, 12]
         euro_rit_full = [39, 30, 2, 11, 33, 14, 25, 41, 27, 47, 5, 44, 23, 29, 36, 17, 43, 20, 48, 12, 1, 7, 21, 4, 13, 16, 45, 10, 31, 8, 40, 38, 32, 24, 26, 34, 15, 18, 37, 9, 49, 19, 35, 3, 6, 42, 50, 46, 28, 22]
