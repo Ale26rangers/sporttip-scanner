@@ -72,25 +72,28 @@ if controlla_password():
             import requests
             response = requests.get(URL).json()
             
-            if isinstance(response, list):
+            # --- PARTE MANCANTE: Elaborazione e Stampa ---
+            if isinstance(response, list) and len(response) > 0:
                 for game in response:
                     home = game['home_team']
                     away = game['away_team']
                     st.divider()
                     st.subheader(f"⚽ {home} vs {away}")
                     
-                    # Estrai le quote
+                    # Cerca il bookmaker (es. sporttip o altri disponibili)
                     for bookmaker in game['bookmakers']:
-                        if bookmaker['key'] == 'sporttip': # o il nome del tuo bookmaker
-                            odds = bookmaker['markets'][0]['outcomes']
-                            col1, col2, col3 = st.columns(3)
-                            col1.metric("1", odds[0]['price'])
-                            col2.metric("X", odds[1]['price'])
-                            col3.metric("2", odds[2]['price'])
+                        # Mostriamo i dati disponibili
+                        odds = bookmaker['markets'][0]['outcomes']
+                        st.write(f"**Bookmaker:** {bookmaker['title']}")
+                        col1, col2, col3 = st.columns(3)
+                        col1.metric("1", odds[0]['price'])
+                        col2.metric("X", odds[1]['price'])
+                        col3.metric("2", odds[2]['price'])
             else:
-                st.warning("Nessuna quota disponibile al momento.")
+                st.write("Nessuna quota disponibile o campionato fermo.")
+                
         except Exception as e:
-            st.error(f"Errore scanner: {e}")
+            st.error(f"Errore: {e}")
 
     # ---------------------------------------------------------
     # 🔮 PREDICTOR PROFESSIONALE (IL NUOVO MOTORE)
