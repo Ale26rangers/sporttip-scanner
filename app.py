@@ -61,9 +61,36 @@ if controlla_password():
     # 🛰️ SCANNER SPORTTIP (Lascialo esattamente come prima)
     # ---------------------------------------------------------
     if opzione == "🛰️ Scanner Sporttip":
-        # ... (Tutto il codice dello scanner vecchio rimane qui) ...
         st.title("🛰️ Scanner Quote Sporttip")
-        st.write("Scanner attivo. Seleziona il Predictor per l'analisi avanzata.")
+        st.write("Recupero quote in tempo reale da The-Odds-API...")
+        
+        try:
+            # Recupera la vecchia chiave da Secrets
+            MY_API_KEY = st.secrets["MY_API_KEY"]
+            URL = f"https://api.the-odds-api.com/v4/sports/soccer_switzerland_superleague/odds/?apiKey={MY_API_KEY}&regions=eu&markets=h2h"
+            
+            import requests
+            response = requests.get(URL).json()
+            
+            if isinstance(response, list):
+                for game in response:
+                    home = game['home_team']
+                    away = game['away_team']
+                    st.divider()
+                    st.subheader(f"⚽ {home} vs {away}")
+                    
+                    # Estrai le quote
+                    for bookmaker in game['bookmakers']:
+                        if bookmaker['key'] == 'sporttip': # o il nome del tuo bookmaker
+                            odds = bookmaker['markets'][0]['outcomes']
+                            col1, col2, col3 = st.columns(3)
+                            col1.metric("1", odds[0]['price'])
+                            col2.metric("X", odds[1]['price'])
+                            col3.metric("2", odds[2]['price'])
+            else:
+                st.warning("Nessuna quota disponibile al momento.")
+        except Exception as e:
+            st.error(f"Errore scanner: {e}")
 
     # ---------------------------------------------------------
     # 🔮 PREDICTOR PROFESSIONALE (IL NUOVO MOTORE)
