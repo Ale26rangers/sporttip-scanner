@@ -92,7 +92,7 @@ if controlla_password():
                     }
                     
                     # 1. Scarica le prossime 5 partite di questo campionato
-                    url_fixtures = f"https://api-football-v1.p.rapidapi.com/v3/fixtures?league={league_id}&next=5"
+                    url = f"https://v3.football.api-sports.io/fixtures?league={league_id}&season=2025&last=5"
                     response = requests.get(url_fixtures, headers=headers).json()
                     
                     if "response" in response and len(response["response"]) > 0:
