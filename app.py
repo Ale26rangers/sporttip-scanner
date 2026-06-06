@@ -80,72 +80,40 @@ if controlla_password():
         league_id = league_ids[campionato]
         
         if st.button("🧮 Avvia Motore Predittivo", type="primary"):
-            with st.spinner("Scaricamento dati e calcolo probabilità in corso..."):
-                try:
-                    API_FOOTBALL_KEY = st.secrets["API_FOOTBALL_KEY"]
-                    headers = {
-                        "X-RapidAPI-Key": API_FOOTBALL_KEY,
-                        "X-RapidAPI-Host": "api-football-v1.p.rapidapi.com"
-                    }
-                    
-                    # 1. Scarica le prossime 5 partite di questo campionato
-                    url = f"https://v3.football.api-sports.io/fixtures?league={league_id}&next=5"
-                    response = requests.get(url_fixtures, headers=headers).json()
-                    
-                    if "response" in response and len(response["response"]) > 0:
-                        st.success(f"✅ Trovati {len(response['response'])} match imminenti. Elaborazione in corso...")
-                        
-                        for match in response["response"]:
-                            fix_id = match["fixture"]["id"]
-                            home = match["teams"]["home"]["name"]
-                            away = match["teams"]["away"]["name"]
-                            data_match = match["fixture"]["date"][:10] # Prende solo YYYY-MM-DD
-                            
-                            # 2. Interroga il motore per le Predizioni di questa partita
-                            url_pred = f"https://api-football-v1.p.rapidapi.com/v3/predictions?fixture={fix_id}"
-                            pred_data = requests.get(url_pred, headers=headers).json()
-                            
-                            if "response" in pred_data and len(pred_data["response"]) > 0:
-                                p = pred_data["response"][0]["predictions"]
-                                
-                                # Probabilità pure
-                                p_home = p["percent"]["home"]
-                                p_draw = p["percent"]["draw"]
-                                p_away = p["percent"]["away"]
-                                advice = p["advice"]
-                                
-                                st.divider()
-                                st.subheader(f"⚽ {home} vs {away}")
-                                st.caption(f"📅 Data: {data_match}")
-                                
-                                # Colonne Visive con le Probabilità
-                                col1, col2, col3 = st.columns(3)
-                                col1.metric(label=f"Vittoria {home}", value=p_home)
-                                col2.metric(label="Pareggio (X)", value=p_draw)
-                                col3.metric(label=f"Vittoria {away}", value=p_away)
-                                
-                                st.info(f"💡 **Verdetto dell'Algoritmo:** {advice}")
-                                
-                                # 3. Il vero segreto: Calcolo delle Fair Odds (Quote Matematiche)
-                                # (Formula = 100 / Percentuale)
-                                num_h = float(p_home.replace('%', ''))
-                                num_d = float(p_draw.replace('%', ''))
-                                num_a = float(p_away.replace('%', ''))
-                                
-                                q_home = round(100 / num_h, 2) if num_h > 0 else 0
-                                q_draw = round(100 / num_d, 2) if num_d > 0 else 0
-                                q_away = round(100 / num_a, 2) if num_a > 0 else 0
-                                
-                                st.markdown("### ⚖️ Quote Matematiche Reali (Fair Odds)")
-                                st.markdown(f"**1:** `{q_home}` | **X:** `{q_draw}` | **2:** `{q_away}`")
-                                st.caption("🔍 **Regola d'oro:** Apri l'app di Sporttip. Se Sporttip offre una quota *SUPERIORE* a queste quote matematiche, hai trovato una **Value Bet**! Scommetti in Singola.")
-                    else:
-                        st.warning("Nessuna partita imminente trovata per questo campionato al momento.")
+            try:
+                # Recupera la chiave
+                API_KEY = st.secrets["API_FOOTBALL_KEY"]
+                headers = {"x-apisports-key": API_KEY}
                 
-                except KeyError:
-                    st.error("⚠️ Chiave API mancante! Assicurati di aver aggiunto 'API_FOOTBALL_KEY' nei secrets di Streamlit.")
-                except Exception as e:
-                    st.error(f"⚠️ Errore di connessione: {e}")
+                # DEFINIAMO QUI LA VARIABILE CHE DAVA ERRORE
+                url_fixtures = f"https://v3.football.api-sports.io/fixtures?league={league_id}&next=5"
+                
+                import requests
+                response = requests.get(url_fixtures, headers=headers).json()
+                
+                if "response" in response and len(response["response"]) > 0:
+                    for match in response["response"]:
+                        fix_id = match["fixture"]["id"]
+                        home = match["teams"]["home"]["name"]
+                        away = match["teams"]["away"]["name"]
+                        
+                        # Recupera predizione
+                        url_pred = f"https://v3.football.api-sports.io/predictions?fixture={fix_id}"
+                        pred_data = requests.get(url_pred, headers=headers).json()
+                        
+                        if "response" in pred_data and len(pred_data["response"]) > 0:
+                            p = pred_data["response"][0]["predictions"]["percent"]
+                            st.divider()
+                            st.subheader(f"⚽ {home} vs {away}")
+                            st.write(f"📊 Vittoria: {p['home']} | X: {p['draw']} | Sconfitta: {p['away']}")
+                            
+                            # Calcolo quota
+                            q_h = round(100 / int(p['home'].replace('%','')), 2)
+                            st.success(f"⚖️ Quota Equa (1): {q_h}")
+                else:
+                    st.warning("Nessuna partita imminente trovata.")
+            except Exception as e:
+                st.error(f"Errore di connessione: {e}")
 
 
     # ---------------------------------------------------------
