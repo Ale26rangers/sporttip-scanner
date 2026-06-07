@@ -314,4 +314,83 @@ if controlla_password():
         st.title("\U0001f3b0 Swiss Lotto")
         data_aggiornamento = "5 Giugno 2026"
         st.caption(f"\U0001f504 *Ultimo aggiornamento statistiche: **{data_aggiornamento}***")
-        swiss_freq_full = [36, 3, 31, 26, 22, 24, 13, 18, 17, 1, 8, 6, 4, 9, 32, 21, 42, 5, 7, 14, 40, 38, 12, 19, 28, 35, 30, 10, 34
+        swiss_freq_full = [36, 3, 31, 26, 22, 24, 13, 18, 17, 1, 8, 6, 4, 9, 32, 21, 42, 5, 7, 14, 40, 38, 12, 19, 28, 35, 30, 10, 34, 23, 33, 39, 16, 20, 29, 25, 15, 11, 2, 27, 37, 41]
+        swiss_fort_full = [1, 5, 4, 6, 2, 3]
+        swiss_rit_full = [28, 11, 23, 2, 41, 15, 33, 4, 30, 8, 36, 17, 34, 16, 27, 26, 42, 29, 3, 25, 39, 13, 22, 19, 14, 21, 10, 5, 24, 7, 32, 40, 20, 18, 12, 1, 38, 9, 31, 37, 35, 6]
+        swiss_fort_rit_full = [5, 2, 6, 1, 4, 3]
+        frequenti = swiss_freq_full[:6]
+        freddi = swiss_freq_full[-6:]
+        ritardatari = swiss_rit_full[:6]
+        l_freq = swiss_fort_full[:2]
+        l_freddi = swiss_fort_full[-2:]
+        l_rit = swiss_fort_rit_full[:2]
+        tab1, tab2 = st.tabs(["\U0001f4ca Visione Statistica", "\U0001f9ee Sistemi"])
+        with tab1:
+            st.subheader("\U0001f522 Numeri Principali (1-42)")
+            c1, c2, c3 = st.columns(3)
+            with c1: st.success("\U0001f525 Freq"); st.write(f"`{frequenti}`")
+            with c2: st.info("\U0001f9ca Freddi"); st.write(f"`{freddi}`")
+            with c3: st.error("\u23f3 Ritardi"); st.write(f"`{ritardatari}`")
+            st.divider()
+            st.subheader("\U0001f340 Numeri Fortunati (1-6)")
+            c4, c5, c6 = st.columns(3)
+            with c4: st.success("\U0001f525 Freq"); st.write(f"`{l_freq}`")
+            with c5: st.info("\U0001f9ca Freddi"); st.write(f"`{l_freddi}`")
+            with c6: st.error("\u23f3 Ritardi"); st.write(f"`{l_rit}`")
+            st.divider()
+            if st.button("\U0001f3b2 Genera Schedina Pesata", use_container_width=True):
+                comb = genera_pesata(range(1, 43), freddi, ritardatari, 6)
+                f_num = genera_pesata(range(1, 7), l_freddi, l_rit, 1)[0]
+                st.success(f"Sestina Strategica: **{comb}** | N. Fortuna: **{f_num}**")
+        with tab2:
+            st.subheader("Sviluppo Sistemi")
+            numeri_scelti = st.multiselect("Scegli i tuoi numeri (7-12):", options=list(range(1, 43)))
+            n_f = st.slider("Numero Fortunato Fisso:", 1, 6, 3)
+            if len(numeri_scelti) >= 7:
+                tutte = list(itertools.combinations(numeri_scelti, 6))
+                passo = max(2, len(tutte) // (len(numeri_scelti) - 3))
+                for idx, c in enumerate(tutte[::passo][:20]):
+                    st.info(f"Schedina {idx+1}: `{sorted(list(c))}` | Fortuna: `{n_f}`")
+
+    # --- EUROMILLIONS ---
+    elif opzione == "\U0001f1ea\U0001f1fa EuroMillions":
+        st.title("\U0001f1ea\U0001f1fa EuroMillions")
+        data_aggiornamento = "5 Giugno 2026"
+        st.caption(f"\U0001f504 *Ultimo aggiornamento statistiche: **{data_aggiornamento}***")
+        euro_freq_full = [44, 42, 23, 19, 29, 17, 10, 21, 50, 37, 27, 35, 25, 26, 20, 45, 13, 14, 4, 5, 15, 24, 38, 7, 12, 34, 49, 30, 6, 11, 16, 39, 48, 3, 28, 8, 1, 9, 31, 36, 47, 2, 41, 43, 32, 40, 18, 46, 33, 22]
+        euro_stelle_full = [2, 3, 8, 9, 6, 5, 7, 1, 4, 10, 11, 12]
+        euro_rit_full = [39, 30, 2, 11, 33, 14, 25, 41, 27, 47, 5, 44, 23, 29, 36, 17, 43, 20, 48, 12, 1, 7, 21, 4, 13, 16, 45, 10, 31, 8, 40, 38, 32, 24, 26, 34, 15, 18, 37, 9, 49, 19, 35, 3, 6, 42, 50, 46, 28, 22]
+        euro_stelle_rit_full = [7, 8, 10, 1, 11, 5, 2, 4, 3, 6, 12, 9]
+        frequenti_eu = euro_freq_full[:5]
+        freddi_eu = euro_freq_full[-5:]
+        ritardatari_eu = euro_rit_full[:5]
+        s_freq = euro_stelle_full[:2]
+        s_fredde = euro_stelle_full[-2:]
+        s_rit = euro_stelle_rit_full[:2]
+        tab1, tab2 = st.tabs(["\U0001f4ca Visione Statistica", "\U0001f9ee Sistemi"])
+        with tab1:
+            st.subheader("\U0001f522 Numeri Principali (1-50)")
+            c1, c2, c3 = st.columns(3)
+            with c1: st.success("\U0001f525 Freq"); st.write(f"`{frequenti_eu}`")
+            with c2: st.info("\U0001f9ca Freddi"); st.write(f"`{freddi_eu}`")
+            with c3: st.error("\u23f3 Ritardi"); st.write(f"`{ritardatari_eu}`")
+            st.divider()
+            st.subheader("\u2b50 Stelle (1-12)")
+            c4, c5, c6 = st.columns(3)
+            with c4: st.success("\U0001f525 Freq"); st.write(f"`{s_freq}`")
+            with c5: st.info("\U0001f9ca Fredde"); st.write(f"`{s_fredde}`")
+            with c6: st.error("\u23f3 Ritardi"); st.write(f"`{s_rit}`")
+            st.divider()
+            if st.button("\U0001f3b2 Genera Schedina Pesata", use_container_width=True):
+                comb = genera_pesata(range(1, 51), freddi_eu, ritardatari_eu, 5)
+                stelle = genera_pesata(range(1, 13), s_fredde, s_rit, 2)
+                st.success(f"Cinquina Strategica: **{comb}** | \u2b50 Stelle: **{stelle}**")
+        with tab2:
+            st.subheader("Sviluppo Sistemi")
+            nums = st.multiselect("Scegli i tuoi numeri (6-11):", options=list(range(1, 51)))
+            stars = st.multiselect("Scegli 2 Stelle:", options=list(range(1, 13)), max_selections=2, default=[3,8])
+            if len(nums) >= 6 and len(stars) == 2:
+                tutte = list(itertools.combinations(nums, 5))
+                passo = max(1, len(tutte) // 6)
+                for idx, c in enumerate(tutte[::passo][:20]):
+                    st.info(f"Giocata {idx+1}: `{sorted(list(c))}` | Stelle: `{sorted(stars)}`")
