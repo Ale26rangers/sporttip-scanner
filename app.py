@@ -42,24 +42,6 @@ def percentuale_a_quota(perc_str):
 
 if controlla_password():
     st.sidebar.title("\U0001f1e8\U0001f1ed Swiss Hub")
-
-    # === INDICATORE CREDITI API-FOOTBALL (non consuma quota) ===
-    with st.sidebar.expander("📊 Crediti API-Football"):
-        try:
-            _hdr = {"x-apisports-key": st.secrets["API_FOOTBALL_KEY"]}
-            _st = requests.get("https://v3.football.api-sports.io/status", headers=_hdr).json()
-            _req = _st["response"]["requests"]
-            _usati = _req["current"]
-            _limite = _req["limit_day"]
-            _rimasti = _limite - _usati
-            st.metric("Rimasti oggi", f"{_rimasti}/{_limite}")
-            if _rimasti <= 10:
-                st.error("⚠️ Quasi esauriti!")
-            elif _rimasti <= 30:
-                st.warning("⚠️ Pochi crediti rimasti")
-        except Exception as _e:
-            st.caption(f"Stato non disponibile: {_e}")
-    
     opzione = st.sidebar.radio("Strumento:", [
         "\U0001f6f0\ufe0f Scanner Sporttip",
         "\U0001f48e Value Bet Finder",
@@ -502,13 +484,18 @@ if controlla_password():
                         url_pred = f"https://v3.football.api-sports.io/predictions?fixture={fix_id}"
                         pred_data = requests.get(url_pred, headers=headers).json()
                         if "response" in pred_data and len(pred_data["response"]) > 0:
-                            p = pred_data["response"][0]["predictions"]["percent"]
+                            blocco = pred_data["response"][0]
+                            pred = blocco["predictions"]
+                            p = pred["percent"]
                             st.divider()
                             st.subheader(f"\u26bd {home} vs {away}")
+
+                            # --- Probabilita' 1X2 ---
                             col1, col2, col3 = st.columns(3)
                             col1.metric("\U0001f3e0 Vittoria Casa", p['home'])
                             col2.metric("\U0001f91d Pareggio", p['draw'])
                             col3.metric("\u2708\ufe0f Vittoria Ospite", p['away'])
+
                             q_h = percentuale_a_quota(p['home'])
                             q_d = percentuale_a_quota(p['draw'])
                             q_a = percentuale_a_quota(p['away'])
@@ -527,6 +514,67 @@ if controlla_password():
                                     st.warning(f"\u26a0\ufe0f **Consiglio Statistico:** Esito piu' probabile **{consiglio}** ({prob_max}%) - partita equilibrata, gioca con cautela")
                                 else:
                                     st.error(f"\u274c **Nessun consiglio** - partita troppo incerta (max {prob_max}%)")
+
+                            # --- Consiglio e vincitore secondo l'API ---
+                            advice = pred.get("advice")
+                            winner = pred.get("winner", {})
+                            colw1, colw2 = st.columns(2)
+                            with colw1:
+                                if winner and winner.get("name"):
+                                    commento = winner.get("comment") or ""
+                                    st.markdown(f"\U0001f3c6 **Pronostico API:** {winner['name']}" + (f" _{commento}_" if commento else ""))
+                            with colw2:
+                                wod = pred.get("win_or_draw")
+                                if wod is not None:
+                                    st.markdown(f"\U0001f6e1\ufe0f **Win or Draw:** {'Si' if wod else 'No'}")
+                            if advice:
+                                st.markdown(f"\U0001f4a1 **Consiglio API:** `{advice}`")
+
+                            # --- Gol attesi e Under/Over ---
+                            goals = pred.get("goals", {})
+                            uo = pred.get("under_over")
+                            gh = goals.get("home")
+                            ga = goals.get("away")
+                            riga_gol = []
+                            if gh is not None:
+                                riga_gol.append(f"Casa attesi: `{gh}`")
+                            if ga is not None:
+                                riga_gol.append(f"Ospite attesi: `{ga}`")
+                            if uo:
+                                riga_gol.append(f"Linea goal: `{uo}`")
+                            if riga_gol:
+                                st.caption("\u26bd Gol attesi \u2192 " + " | ".join(riga_gol))
+
+                            # --- Confronto squadre (comparison) ---
+                            comp = blocco.get("comparison", {})
+                            if comp:
+                                with st.expander("\U0001f4c8 Confronto dettagliato squadre"):
+                                    st.caption("Valori in % \u2014 quanto ogni squadra 'pesa' su ciascun fattore secondo il modello (casa vs ospite).")
+                                    voci = {
+                                        "form": "Forma", "att": "Attacco", "def": "Difesa",
+                                        "poisson_distribution": "Distribuzione Poisson",
+                                        "h2h": "Scontri diretti", "goals": "Gol", "total": "Totale"
+                                    }
+                                    for chiave, etichetta in voci.items():
+                                        if chiave in comp and isinstance(comp[chiave], dict):
+                                            ch = comp[chiave].get("home", "-")
+                                            ca = comp[chiave].get("away", "-")
+                                            st.markdown(f"**{etichetta}** \u2014 {home}: `{ch}` vs {away}: `{ca}`")
+
+                            # --- Ultimi scontri diretti (h2h) ---
+                            h2h = blocco.get("h2h", [])
+                            if h2h:
+                                with st.expander(f"\U0001f501 Ultimi scontri diretti ({min(len(h2h), 5)})"):
+                                    for g in h2h[:5]:
+                                        try:
+                                            d = g["fixture"]["date"][:10]
+                                            th = g["teams"]["home"]["name"]
+                                            ta = g["teams"]["away"]["name"]
+                                            gh_s = g["goals"]["home"]
+                                            ga_s = g["goals"]["away"]
+                                            st.markdown(f"`{d}` {th} **{gh_s}-{ga_s}** {ta}")
+                                        except:
+                                            continue
                 else:
                     st.warning("Nessuna partita imminente trovata. Il campionato potrebbe essere in pausa stagionale.")
             except Exception as e:
@@ -558,6 +606,30 @@ if controlla_password():
                 if "response" not in resp_games or len(resp_games["response"]) == 0:
                     st.warning("\u26a0\ufe0f Nessuna partita imminente trovata. La lega potrebbe essere in pausa stagionale.")
                 else:
+                    # Recupero classifica UNA volta sola per dare contesto di forza alle squadre.
+                    # (1 sola chiamata extra per tutta la lega, non per partita.)
+                    classifica = {}  # team_name -> dict con posizione, punti, ecc.
+                    try:
+                        url_stand = f"https://v1.hockey.api-sports.io/standings?league={league_id_h}&season={stagione}"
+                        resp_stand = requests.get(url_stand, headers=headers_h).json()
+                        if "response" in resp_stand and len(resp_stand["response"]) > 0:
+                            # standings e' una lista di gruppi, ognuno lista di righe
+                            for gruppo in resp_stand["response"]:
+                                righe = gruppo if isinstance(gruppo, list) else [gruppo]
+                                for r in righe:
+                                    try:
+                                        nome_team = r["team"]["name"]
+                                        classifica[nome_team] = {
+                                            "pos": r.get("position"),
+                                            "punti": r.get("points"),
+                                            "win": r.get("games", {}).get("win", {}).get("total"),
+                                            "lose": r.get("games", {}).get("lose", {}).get("total"),
+                                        }
+                                    except:
+                                        continue
+                    except:
+                        pass
+
                     for game in resp_games["response"]:
                         game_id = game["id"]
                         home = game["teams"]["home"]["name"]
@@ -566,6 +638,22 @@ if controlla_password():
                         st.divider()
                         st.subheader(f"\U0001f3d2 {home} vs {away}")
                         st.caption(f"\U0001f4c5 Data: {data_partita}")
+
+                        # Contesto classifica (se disponibile)
+                        ch = classifica.get(home)
+                        ca = classifica.get(away)
+                        if ch or ca:
+                            def fmt_classifica(c):
+                                if not c:
+                                    return "n/d"
+                                parti = []
+                                if c.get("pos") is not None: parti.append(f"{c['pos']}\u00b0")
+                                if c.get("punti") is not None: parti.append(f"{c['punti']} pti")
+                                if c.get("win") is not None and c.get("lose") is not None:
+                                    parti.append(f"{c['win']}V-{c['lose']}P")
+                                return " \u00b7 ".join(parti) if parti else "n/d"
+                            st.caption(f"\U0001f4cb Classifica \u2192 {home}: {fmt_classifica(ch)} | {away}: {fmt_classifica(ca)}")
+
                         url_odds = f"https://v1.hockey.api-sports.io/odds?game={game_id}"
                         resp_odds = requests.get(url_odds, headers=headers_h).json()
                         q1, q2 = None, None
