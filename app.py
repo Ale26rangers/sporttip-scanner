@@ -42,6 +42,24 @@ def percentuale_a_quota(perc_str):
 
 if controlla_password():
     st.sidebar.title("\U0001f1e8\U0001f1ed Swiss Hub")
+
+    # === INDICATORE CREDITI API-FOOTBALL (non consuma quota) ===
+    with st.sidebar.expander("\U0001f4ca Crediti API-Football"):
+        try:
+            _hdr = {"x-apisports-key": st.secrets["API_FOOTBALL_KEY"]}
+            _st = requests.get("https://v3.football.api-sports.io/status", headers=_hdr).json()
+            _req = _st["response"]["requests"]
+            _usati = _req["current"]
+            _limite = _req["limit_day"]
+            _rimasti = _limite - _usati
+            st.metric("Rimasti oggi", f"{_rimasti}/{_limite}")
+            if _rimasti <= 10:
+                st.error("\u26a0\ufe0f Quasi esauriti!")
+            elif _rimasti <= 30:
+                st.warning("\u26a0\ufe0f Pochi crediti rimasti")
+        except Exception as _e:
+            st.caption(f"Stato non disponibile: {_e}")
+
     opzione = st.sidebar.radio("Strumento:", [
         "\U0001f6f0\ufe0f Scanner Sporttip",
         "\U0001f48e Value Bet Finder",
