@@ -481,6 +481,7 @@ if controlla_password():
 
         league_id = None
         campionato = None
+        league_season = None
 
         if modalita == "\u2b50 Preferiti (Europa)":
             league_ids = {
@@ -535,6 +536,7 @@ if controlla_password():
                 nomi = list(st.session_state["leghe_paese"].keys())
                 campionato = st.selectbox("Scegli il Campionato:", nomi)
                 league_id = st.session_state["leghe_paese"][campionato]["id"]
+                league_season = st.session_state["leghe_paese"][campionato].get("season")
 
         avvia = st.button("\U0001f9ee Avvia Motore Predittivo", type="primary", disabled=(league_id is None))
         if league_id is None:
@@ -544,9 +546,57 @@ if controlla_password():
             try:
                 API_KEY = st.secrets["API_FOOTBALL_KEY"]
                 headers = {"x-apisports-key": API_KEY}
-                url_fixtures = f"https://v3.football.api-sports.io/fixtures?league={league_id}&next=5"
-                response = requests.get(url_fixtures, headers=headers).json()
-                if "response" in response and len(response["response"]) > 0:
+
+                # Strategia di ricerca partite robusta:
+                # 1) prova next=5 (semplice)
+                # 2) se vuoto e abbiamo la stagione, prova per finestra di date (prossimi 30 gg) + season
+                import datetime as _dt
+
+                def chiedi_fixtures(url):
+                    r = requests.get(url, headers=headers).json()
+                    return r
+
+                response = None
+                diag = []  # raccoglie info diagnostiche
+
+                # Tentativo 1: next
+                url_n = f"https://v3.football.api-sports.io/fixtures?league={league_id}&next=5"
+                r1 = chiedi_fixtures(url_n)
+                n1 = len(r1.get("response", [])) if isinstance(r1, dict) else 0
+                err1 = r1.get("errors") if isinstance(r1, dict) else None
+                diag.append(f"Tentativo 'next=5': {n1} partite" + (f" | errori: {err1}" if err1 else ""))
+                if n1 > 0:
+                    response = r1
+
+                # Tentativo 2: finestra date + season (se disponibile)
+                if response is None:
+                    oggi = _dt.date.today()
+                    fine = oggi + _dt.timedelta(days=30)
+                    if league_season:
+                        url_d = (f"https://v3.football.api-sports.io/fixtures?league={league_id}"
+                                 f"&season={league_season}&from={oggi}&to={fine}")
+                    else:
+                        url_d = (f"https://v3.football.api-sports.io/fixtures?league={league_id}"
+                                 f"&from={oggi}&to={fine}")
+                    r2 = chiedi_fixtures(url_d)
+                    lista2 = r2.get("response", []) if isinstance(r2, dict) else []
+                    # teniamo solo le non ancora giocate (status NS = Not Started)
+                    lista2_ns = [m for m in lista2 if m.get("fixture", {}).get("status", {}).get("short") in ("NS", "TBD")]
+                    err2 = r2.get("errors") if isinstance(r2, dict) else None
+                    diag.append(f"Tentativo 'date+season ({league_season})': {len(lista2)} totali, {len(lista2_ns)} non giocate" + (f" | errori: {err2}" if err2 else ""))
+                    if lista2_ns:
+                        response = {"response": lista2_ns[:5]}
+                    elif lista2:
+                        # se ci sono partite ma tutte giocate, mostriamo comunque le prossime per data
+                        response = {"response": lista2[:5]}
+
+                # Pannello diagnostico (sempre visibile, aiuta a capire)
+                with st.expander("\U0001f527 Diagnostica ricerca partite"):
+                    st.write(f"League ID: `{league_id}` | Stagione: `{league_season}`")
+                    for d in diag:
+                        st.caption(d)
+
+                if response and len(response.get("response", [])) > 0:
                     for match in response["response"]:
                         fix_id = match["fixture"]["id"]
                         home = match["teams"]["home"]["name"]
@@ -646,7 +696,7 @@ if controlla_password():
                                         except:
                                             continue
                 else:
-                    st.warning("Nessuna partita imminente trovata. Il campionato potrebbe essere in pausa stagionale.")
+                    st.warning("Nessuna partita trovata con nessuno dei due metodi di ricerca. Apri la **Diagnostica** qui sopra per vedere i dettagli (stagione usata, errori API). Il campionato potrebbe essere davvero in pausa, oppure la stagione corrente registrata non ha partite imminenti.")
             except Exception as e:
                 st.error(f"Errore di connessione: {e}")
 
