@@ -473,22 +473,74 @@ if controlla_password():
     elif opzione == "\U0001f52e Predictor Calcio":
         st.title("\U0001f52e Predictor Calcio")
         st.write("Analisi avanzata delle probabilita' e calcolo delle **Quote di Valore (Fair Odds)**.")
-        league_ids = {
-            "\U0001f1e8\U0001f1ed Super League Svizzera": 202,
-            "\U0001f1ee\U0001f1f9 Serie A": 135,
-            "\U0001f3f4 Premier League": 39,
-            "\U0001f1e9\U0001f1ea Bundesliga": 78,
-            "\U0001f1ea\U0001f1f8 La Liga": 140,
-            "\U0001f1eb\U0001f1f7 Ligue 1": 61,
-            "\U0001f1f3\U0001f1f1 Eredivisie (Olanda)": 88,
-            "\U0001f1f5\U0001f1f9 Primeira Liga": 94,
-            "\U0001f1e7\U0001f1ea Jupiler Pro League": 144,
-            "\U0001f3c6 Champions League": 2,
-            "\U0001f3c6 Europa League": 3,
-        }
-        campionato = st.selectbox("Scegli il Campionato da analizzare:", list(league_ids.keys()))
-        league_id = league_ids[campionato]
-        if st.button("\U0001f9ee Avvia Motore Predittivo", type="primary"):
+
+        # Due modalita': campionati 'preferiti' fissi, oppure ricerca per paese (carica gli ID live)
+        modalita = st.radio("Come scegliere il campionato:",
+                            ["\u2b50 Preferiti (Europa)", "\U0001f30e Cerca per Paese (carica live)"],
+                            horizontal=True)
+
+        league_id = None
+        campionato = None
+
+        if modalita == "\u2b50 Preferiti (Europa)":
+            league_ids = {
+                "\U0001f1e8\U0001f1ed Super League Svizzera": 202,
+                "\U0001f1ee\U0001f1f9 Serie A": 135,
+                "\U0001f3f4 Premier League": 39,
+                "\U0001f1e9\U0001f1ea Bundesliga": 78,
+                "\U0001f1ea\U0001f1f8 La Liga": 140,
+                "\U0001f1eb\U0001f1f7 Ligue 1": 61,
+                "\U0001f1f3\U0001f1f1 Eredivisie (Olanda)": 88,
+                "\U0001f1f5\U0001f1f9 Primeira Liga": 94,
+                "\U0001f1e7\U0001f1ea Jupiler Pro League": 144,
+                "\U0001f3c6 Champions League": 2,
+                "\U0001f3c6 Europa League": 3,
+            }
+            campionato = st.selectbox("Scegli il Campionato da analizzare:", list(league_ids.keys()))
+            league_id = league_ids[campionato]
+        else:
+            # Selettore Paese -> carica campionati live dall'endpoint leagues
+            paesi = ["Argentina", "Brazil", "Uruguay", "Chile", "Colombia", "Paraguay",
+                     "Peru", "Ecuador", "Bolivia", "Venezuela", "USA", "Mexico", "Japan", "Australia"]
+            paese = st.selectbox("Scegli il Paese:", paesi,
+                                 help="Carica i campionati attivi di questo paese (1 chiamata API).")
+            if st.button("\U0001f50d Carica campionati di " + paese):
+                try:
+                    API_KEY = st.secrets["API_FOOTBALL_KEY"]
+                    headers = {"x-apisports-key": API_KEY}
+                    url_lg = f"https://v3.football.api-sports.io/leagues?country={paese}&current=true&type=league"
+                    resp_lg = requests.get(url_lg, headers=headers).json()
+                    leghe_trovate = {}
+                    if "response" in resp_lg:
+                        for item in resp_lg["response"]:
+                            lg = item["league"]
+                            # prendiamo la stagione corrente
+                            stagione_corr = None
+                            for s in item.get("seasons", []):
+                                if s.get("current"):
+                                    stagione_corr = s.get("year")
+                            leghe_trovate[lg["name"]] = {"id": lg["id"], "season": stagione_corr}
+                    if leghe_trovate:
+                        st.session_state["leghe_paese"] = leghe_trovate
+                        st.session_state["paese_caricato"] = paese
+                    else:
+                        st.warning(f"Nessun campionato attivo trovato per {paese}.")
+                        st.session_state.pop("leghe_paese", None)
+                except Exception as e:
+                    st.error(f"Errore caricamento campionati: {e}")
+
+            # Se abbiamo campionati caricati in sessione, mostriamo il selettore
+            if "leghe_paese" in st.session_state and st.session_state["leghe_paese"]:
+                st.caption(f"Campionati attivi caricati per: **{st.session_state.get('paese_caricato', '')}**")
+                nomi = list(st.session_state["leghe_paese"].keys())
+                campionato = st.selectbox("Scegli il Campionato:", nomi)
+                league_id = st.session_state["leghe_paese"][campionato]["id"]
+
+        avvia = st.button("\U0001f9ee Avvia Motore Predittivo", type="primary", disabled=(league_id is None))
+        if league_id is None:
+            st.info("\U0001f446 Seleziona (o carica) un campionato per avviare l'analisi.")
+
+        if avvia and league_id is not None:
             try:
                 API_KEY = st.secrets["API_FOOTBALL_KEY"]
                 headers = {"x-apisports-key": API_KEY}
