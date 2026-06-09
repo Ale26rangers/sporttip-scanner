@@ -499,6 +499,11 @@ if controlla_password():
             }
             campionato = st.selectbox("Scegli il Campionato da analizzare:", list(league_ids.keys()))
             league_id = league_ids[campionato]
+            # Selettore stagione opzionale: serve per TESTARE su dati storici (free: 2022-2024)
+            usa_storico = st.checkbox("\U0001f4da Test su stagione storica (per piano gratuito: 2022-2024)")
+            if usa_storico:
+                league_season = st.selectbox("Stagione storica da testare:", [2024, 2023, 2022])
+                st.caption("Su stagioni passate vedrai partite gia' giocate (coi risultati). Serve a verificare che la chiave acceda ai dati.")
         else:
             # Selettore Paese -> carica campionati live dall'endpoint leagues
             paesi = ["Argentina", "Brazil", "Uruguay", "Chile", "Colombia", "Paraguay",
@@ -590,11 +595,29 @@ if controlla_password():
                         # se ci sono partite ma tutte giocate, mostriamo comunque le prossime per data
                         response = {"response": lista2[:5]}
 
+                # Tentativo 3: stagione intera (utile per TEST STORICO su stagioni passate)
+                # Se siamo qui e abbiamo una stagione, chiediamo tutte le partite di quella stagione.
+                if response is None and league_season:
+                    url_s = f"https://v3.football.api-sports.io/fixtures?league={league_id}&season={league_season}"
+                    r3 = chiedi_fixtures(url_s)
+                    lista3 = r3.get("response", []) if isinstance(r3, dict) else []
+                    err3 = r3.get("errors") if isinstance(r3, dict) else None
+                    # ordiniamo per data e prendiamo le piu' recenti (le ultime giocate)
+                    try:
+                        lista3.sort(key=lambda m: m.get("fixture", {}).get("date", ""), reverse=True)
+                    except:
+                        pass
+                    diag.append(f"Tentativo 'stagione intera ({league_season})': {len(lista3)} partite trovate" + (f" | errori: {err3}" if err3 else ""))
+                    if lista3:
+                        response = {"response": lista3[:5], "_storico": True}
+
                 # Pannello diagnostico (sempre visibile, aiuta a capire)
-                with st.expander("\U0001f527 Diagnostica ricerca partite"):
+                with st.expander("\U0001f527 Diagnostica ricerca partite", expanded=True):
                     st.write(f"League ID: `{league_id}` | Stagione: `{league_season}`")
                     for d in diag:
                         st.caption(d)
+                    if response and response.get("_storico"):
+                        st.info("\U0001f4da Modalita' STORICO: mostro partite gia' giocate di questa stagione (con risultato finale). Le previsioni potrebbero non essere disponibili su gare concluse.")
 
                 if response and len(response.get("response", [])) > 0:
                     for match in response["response"]:
@@ -717,14 +740,50 @@ if controlla_password():
         campionato_h = st.selectbox("Scegli la Lega Hockey:", list(hockey_leagues.keys()))
         league_id_h = hockey_leagues[campionato_h]
         stagione = st.number_input("Stagione (anno di inizio):", min_value=2020, max_value=2026, value=2025, step=1)
+        st.caption("\U0001f4a1 Su piano gratuito la stagione corrente potrebbe essere bloccata. Per un test, prova una stagione passata (es. 2023): vedrai partite gia' giocate.")
         if st.button("\U0001f3d2 Avvia Analisi Hockey", type="primary"):
             try:
                 API_KEY_H = st.secrets["API_HOCKEY_KEY"]
                 headers_h = {"x-apisports-key": API_KEY_H}
-                url_games = f"https://v1.hockey.api-sports.io/games?league={league_id_h}&season={stagione}&next=5"
-                resp_games = requests.get(url_games, headers=headers_h).json()
-                if "response" not in resp_games or len(resp_games["response"]) == 0:
-                    st.warning("\u26a0\ufe0f Nessuna partita imminente trovata. La lega potrebbe essere in pausa stagionale.")
+
+                diag_h = []
+                resp_games = None
+
+                # Tentativo 1: next=5 (partite imminenti)
+                url_g1 = f"https://v1.hockey.api-sports.io/games?league={league_id_h}&season={stagione}&next=5"
+                rg1 = requests.get(url_g1, headers=headers_h).json()
+                ng1 = len(rg1.get("response", [])) if isinstance(rg1, dict) else 0
+                errg1 = rg1.get("errors") if isinstance(rg1, dict) else None
+                diag_h.append(f"Tentativo 'next=5': {ng1} partite" + (f" | errori: {errg1}" if errg1 else ""))
+                if ng1 > 0:
+                    resp_games = rg1
+
+                # Tentativo 2: stagione intera (test storico) - le piu' recenti per data
+                storico_h = False
+                if resp_games is None:
+                    url_g2 = f"https://v1.hockey.api-sports.io/games?league={league_id_h}&season={stagione}"
+                    rg2 = requests.get(url_g2, headers=headers_h).json()
+                    lista_g2 = rg2.get("response", []) if isinstance(rg2, dict) else []
+                    errg2 = rg2.get("errors") if isinstance(rg2, dict) else None
+                    try:
+                        lista_g2.sort(key=lambda g: g.get("date", ""), reverse=True)
+                    except:
+                        pass
+                    diag_h.append(f"Tentativo 'stagione intera ({stagione})': {len(lista_g2)} partite" + (f" | errori: {errg2}" if errg2 else ""))
+                    if lista_g2:
+                        resp_games = {"response": lista_g2[:5]}
+                        storico_h = True
+
+                # Pannello diagnostico
+                with st.expander("\U0001f527 Diagnostica ricerca partite (Hockey)", expanded=True):
+                    st.write(f"League ID: `{league_id_h}` | Stagione: `{stagione}`")
+                    for d in diag_h:
+                        st.caption(d)
+                    if storico_h:
+                        st.info("\U0001f4da Modalita' STORICO: mostro partite gia' giocate (coi risultati).")
+
+                if resp_games is None or len(resp_games.get("response", [])) == 0:
+                    st.warning("\u26a0\ufe0f Nessuna partita trovata con nessun metodo. Apri la Diagnostica qui sopra per vedere gli errori dell'API (es. blocco stagione sul piano free).")
                 else:
                     # Recupero classifica UNA volta sola per dare contesto di forza alle squadre.
                     # (1 sola chiamata extra per tutta la lega, non per partita.)
